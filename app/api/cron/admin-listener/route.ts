@@ -215,7 +215,11 @@ async function processKamoskaChannel() {
     // Handle article brief reply
     if (isArticleBriefReply(text)) {
       await handleArticleBrief(msg.content, kamoskaChannel, settings.userName)
+      continue
     }
+
+    // General chat — respond to any message
+    await handleGeneralChat(rawText, kamoskaChannel, settings.userName)
   }
 }
 
@@ -373,6 +377,30 @@ async function handleDateInput(text: string, taskId: string, channelId: string, 
   } else {
     await sendDiscordMessage(`Nerozumela som dátumu. Skús napísať napr. "5. apríla" alebo "piatok".`, channelId)
   }
+}
+
+async function handleGeneralChat(userMessage: string, channelId: string, userName: string) {
+  const { getConversations, addMessage } = await import('@/lib/kv')
+
+  const history = await getConversations()
+
+  const res = await client.messages.create({
+    model: 'claude-opus-4-6',
+    max_tokens: 400,
+    system: `Si SOVA – Sona, osobna AI asistentka pre ${userName}. Si priatelska, tepla, autenticka. Komunikujes VYHRADNE po slovensky BEZ diakritiky (bez hacikov a dlznovov) ale gramaticky spravna slovencina. Si ako najlepsia priatelka. Bud strucna, prirodzena, nikdy generická. Max 3-4 vety ak nie je potrebny dlhsi obsah.`,
+    messages: [
+      ...history.slice(-10).map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+      { role: 'user', content: userMessage },
+    ],
+  })
+
+  const reply = res.content[0].type === 'text' ? res.content[0].text : ''
+  if (!reply) return
+
+  await addMessage({ role: 'user', content: userMessage, timestamp: new Date().toISOString() })
+  await addMessage({ role: 'assistant', content: reply, timestamp: new Date().toISOString() })
+
+  await sendDiscordMessage(reply, channelId)
 }
 
 async function handleArticleBrief(brief: string, channelId: string, userName: string) {
