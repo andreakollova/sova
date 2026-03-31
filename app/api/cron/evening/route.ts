@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getSettings, KEYS, isWithinTimeWindow, getPendingInstructions, markInstructionDelivered } from '@/lib/kv'
+import redis from '@/lib/kv'
 import { sendDiscordMessage, formatEveningWrapup } from '@/lib/discord'
-import { getTomorrowEvents } from '@/lib/google-calendar'
+import { getTodayEvents, getTomorrowEvents } from '@/lib/google-calendar'
 import { getTodayCompletedTasks, getTopPriorityTasks } from '@/lib/tasks'
+import { hasWorkout } from '@/lib/sova-personality'
+import { MEDIA } from '@/lib/media'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -14,13 +17,25 @@ export async function GET(req: NextRequest) {
 
   try {
     const settings = await getSettings()
+
+    // Check goodnight window (21:20)
+    const shouldSendGoodnight = await isWithinTimeWindow(KEYS.CRON_GOODNIGHT_LAST, '21:20')
+    if (shouldSendGoodnight) {
+      await sendDiscordMessage(
+        `${MEDIA.goodnight} Laska, ${settings.userName} 💜 Zasluzis si odpocnok. Dobru noc.`,
+        settings.discordChannelId
+      )
+      return NextResponse.json({ success: true, type: 'goodnight' })
+    }
+
     const shouldRun = await isWithinTimeWindow(KEYS.CRON_EVENING_LAST, settings.eveningTime)
     if (!shouldRun) return NextResponse.json({ skipped: true })
 
-    const [completedTasks, openTasks, tomorrowEvents] = await Promise.all([
+    const [completedTasks, openTasks, tomorrowEvents, todayEvents] = await Promise.all([
       getTodayCompletedTasks(),
       getTopPriorityTasks(5),
       getTomorrowEvents(),
+      getTodayEvents(),
     ])
 
     const pendingInstructions = await getPendingInstructions()
@@ -56,6 +71,19 @@ Buď autentická a povzbudivá. Ak máš inštrukcie, zakomponuj ich ako svoju v
     })
 
     await sendDiscordMessage(message, settings.discordChannelId)
+
+    // Workout check-in: if today had a workout in calendar and we haven't checked yet
+    if (hasWorkout(todayEvents)) {
+      const todayStr = new Date().toISOString().slice(0, 10)
+      const workoutCheckSent = await redis.get<string>(KEYS.WORKOUT_CHECK_SENT)
+      if (workoutCheckSent !== todayStr) {
+        await sendDiscordMessage(
+          `Dnes si mala trening v plane. Slo to? Odpis mi ano/nie 💪`,
+          settings.discordChannelId
+        )
+        await redis.set(KEYS.WORKOUT_CHECK_SENT, todayStr)
+      }
+    }
 
     return NextResponse.json({ success: true })
   } catch (err) {

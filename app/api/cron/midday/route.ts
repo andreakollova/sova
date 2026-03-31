@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { getSettings } from '@/lib/kv'
+import { getSettings, KEYS, isWithinTimeWindow } from '@/lib/kv'
 import { sendDiscordMessage } from '@/lib/discord'
+import { MEDIA } from '@/lib/media'
 import { getTodayEvents } from '@/lib/google-calendar'
 import { getTopPriorityTasks } from '@/lib/tasks'
 
@@ -13,8 +14,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const [settings, events, tasks] = await Promise.all([
-      getSettings(),
+    const settings = await getSettings()
+    const shouldRun = await isWithinTimeWindow(KEYS.CRON_MIDDAY_LAST, '12:00')
+    if (!shouldRun) return NextResponse.json({ skipped: true })
+
+    const [events, tasks] = await Promise.all([
       getTodayEvents(),
       getTopPriorityTasks(3),
     ])
@@ -46,6 +50,11 @@ Buď stručná, teplá, konkrétna. Max 1 emoji.`,
     const name = Math.random() > 0.5 ? settings.userName : 'Fondula'
 
     await sendDiscordMessage(`☀️ **Poludnie, ${name}!**\n\n${msg}`, settings.discordChannelId)
+
+    await sendDiscordMessage(
+      `${MEDIA.lunch} Dobru chut, ${name}! Nezabudni si odochnout.`,
+      settings.discordChannelId
+    )
 
     return NextResponse.json({ success: true })
   } catch (err) {

@@ -50,6 +50,9 @@ const config: Config = {
           foreground: 'hsl(var(--card-foreground))',
         },
         sova: {
+          orange: '#FF7F00',
+          'blue-start': '#082f5d',
+          'blue-end': '#0b114e',
           purple: '#8B5CF6',
           violet: '#7C3AED',
           pink: '#EC4899',

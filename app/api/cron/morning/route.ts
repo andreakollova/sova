@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { getSettings, KEYS, isWithinTimeWindow, getPendingInstructions, markInstructionDelivered } from '@/lib/kv'
+import { getSettings, KEYS, isWithinTimeWindow, getPendingInstructions, markInstructionDelivered, getHockeyPlan } from '@/lib/kv'
 import { sendDiscordMessage, formatMorningBriefing } from '@/lib/discord'
 import { getTodayEvents, getTomorrowEvents } from '@/lib/google-calendar'
 import { getTopPriorityTasks } from '@/lib/tasks'
 import { getNewEmailsFromWatchedAddresses } from '@/lib/gmail'
-import { getDayGreeting, hasWorkout } from '@/lib/sova-personality'
+import { getDayGreeting, hasWorkout, hasRunning, hasFitness } from '@/lib/sova-personality'
+import { MEDIA } from '@/lib/media'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -20,11 +21,12 @@ export async function GET(req: NextRequest) {
     const shouldRun = await isWithinTimeWindow(KEYS.CRON_MORNING_LAST, settings.morningTime)
     if (!shouldRun) return NextResponse.json({ skipped: true })
 
-    const [todayEvents, tomorrowEvents, topTasks, urgentEmails] = await Promise.all([
+    const [todayEvents, tomorrowEvents, topTasks, urgentEmails, hockeyPlan] = await Promise.all([
       getTodayEvents(),
       getTomorrowEvents(),
       getTopPriorityTasks(3),
       getNewEmailsFromWatchedAddresses(),
+      getHockeyPlan(),
     ])
 
     const hasTraining = hasWorkout(todayEvents)
@@ -83,6 +85,34 @@ Buď konkrétna, teplá, nikdy generická. Ak máš inštrukcie vyššie, zakomp
     })
 
     await sendDiscordMessage(message, settings.discordChannelId)
+
+    // Running day message
+    if (hasRunning(todayEvents)) {
+      await sendDiscordMessage(
+        `${MEDIA.running} Dnes behas! Daj do toho vsetko Fondula 🔥`,
+        settings.discordChannelId
+      )
+    }
+
+    // Fitness day message
+    if (hasFitness(todayEvents)) {
+      await sendDiscordMessage(
+        `${MEDIA.fitness} Fitness day! Vyzvi sama seba, ${settings.userName} 💥`,
+        settings.discordChannelId
+      )
+    }
+
+    // Hockey match day message
+    if (hockeyPlan?.hasMatch && hockeyPlan.matchDate) {
+      const todayDateStr = new Date().toISOString().slice(0, 10)
+      if (hockeyPlan.matchDate === todayDateStr) {
+        const opponentInfo = hockeyPlan.opponent ? ` Dnes hraš proti ${hockeyPlan.opponent}!` : ''
+        await sendDiscordMessage(
+          `🏒🏒🏒 Dnes je zapas!${opponentInfo}`,
+          settings.discordChannelId
+        )
+      }
+    }
 
     return NextResponse.json({ success: true })
   } catch (err) {

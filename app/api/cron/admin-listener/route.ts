@@ -13,9 +13,16 @@ import {
   markInstructionDelivered,
   getSettings,
   getTaskSession,
+  getPomodoro,
+  setPomodoro,
+  getMondayQuestionsSent,
+  saveHockeyPlan,
+  saveWorkoutPlan,
   type AdminInstruction,
+  type PomodoroSession,
 } from '@/lib/kv'
 import redis from '@/lib/kv'
+import { MEDIA } from '@/lib/media'
 
 export const dynamic = 'force-dynamic'
 
@@ -109,7 +116,11 @@ Prepíš to ako SVOJU VLASTNÚ prirodzenú správu pre ${userName}. Musí to zni
   }
 }
 
-// ─── Kamoška channel: detect "úlohy" trigger ────────────────────────────
+// ─── Kamoška channel: detect triggers ───────────────────────────────────
+
+const POMODORO_START_WORDS = ['zacat', 'začat', 'start']
+const HOCKEY_KEYWORDS = ['hokej', 'zapas', 'hockey', 'zapas']
+const WORKOUT_ANSWER_KEYWORDS = ['cvicenie', 'trening', 'cvicit', 'plan', 'fitness', 'gym']
 
 async function processKamoskaChannel() {
   const kamoskaChannel = process.env.DISCORD_CHANNEL_ID
@@ -127,14 +138,18 @@ async function processKamoskaChannel() {
   const settings = await getSettings()
   const session = await getTaskSession()
 
+  // Check active pomodoro on every run
+  await checkActivePomodoro(kamoskaChannel, settings.userName)
+
   for (const msg of userMessages) {
     const text = msg.content.trim().toLowerCase()
+    const rawText = msg.content.trim()
 
     // Task session trigger
     if (TASK_TRIGGER_WORDS.some((kw) => text.includes(kw)) && !session?.active) {
       await sendMessageWithButtons(
         kamoskaChannel,
-        `Ahoj! 😊 Poďme si prejsť úlohy. Spustím session kde ti budem ukazovať vždy jednu úlohu a ty mi povieš čo s ňou. Pripravená?`,
+        `Ahoj! 😊 Pojdme si prejst ulohy. Spustim session kde ti budem ukazovat vzdy jednu ulohu a ty mi povies co s nou. Pripravena?`,
         START_SESSION_BUTTON
       )
       return
@@ -146,11 +161,153 @@ async function processKamoskaChannel() {
       return
     }
 
+    // Pomodoro start trigger
+    if (POMODORO_START_WORDS.some((kw) => text.includes(kw))) {
+      const activePomodoro = await getPomodoro()
+      if (!activePomodoro) {
+        const newSession: PomodoroSession = {
+          phase: 'work',
+          startedAt: new Date().toISOString(),
+          round: 1,
+        }
+        await setPomodoro(newSession)
+        await sendDiscordMessage(
+          `${MEDIA.pomodoroStart} Focus time zacina! 25 minut soustredenia. Zacat! 💻\n\nNapisiste 'hotovo' ked skoncis alebo budem vediet po 25 minutach.`,
+          kamoskaChannel
+        )
+        continue
+      }
+    }
+
+    // Workout yes/no response (after workout check was sent today)
+    const todayStr = new Date().toISOString().slice(0, 10)
+    const workoutCheckSent = await redis.get<string>(KEYS.WORKOUT_CHECK_SENT)
+    if (workoutCheckSent === todayStr) {
+      if (text === 'ano' || text === 'áno') {
+        await sendDiscordMessage(
+          `${MEDIA.celebration} To je ono! Hrda na teba, ${settings.userName}! Kazdy trening ta posunul blizsie k cielom 🎉`,
+          kamoskaChannel
+        )
+        continue
+      }
+      if (text === 'nie') {
+        await sendDiscordMessage(
+          `Nic sa nedeje! Telo niekedy potrebuje pauzu. Zajtra bude lepsie 💜 Co ti prekazi? Mozem pomoct s planom.`,
+          kamoskaChannel
+        )
+        continue
+      }
+    }
+
+    // Monday hockey answer
+    const mondayQuestionsSent = await getMondayQuestionsSent()
+    if (mondayQuestionsSent === todayStr) {
+      if (HOCKEY_KEYWORDS.some((kw) => text.includes(kw))) {
+        await handleHockeyAnswer(rawText, kamoskaChannel)
+        continue
+      }
+      if (WORKOUT_ANSWER_KEYWORDS.some((kw) => text.includes(kw))) {
+        await handleWorkoutAnswer(rawText, kamoskaChannel)
+        continue
+      }
+    }
+
     // Handle article brief reply
     if (isArticleBriefReply(text)) {
       await handleArticleBrief(msg.content, kamoskaChannel, settings.userName)
     }
   }
+}
+
+async function checkActivePomodoro(channelId: string, userName: string) {
+  const pomodoro = await getPomodoro()
+  if (!pomodoro) return
+
+  const now = new Date()
+  const startedAt = new Date(pomodoro.startedAt)
+  const elapsedMin = (now.getTime() - startedAt.getTime()) / 60000
+
+  if (pomodoro.phase === 'work' && elapsedMin >= 25) {
+    await setPomodoro({ ...pomodoro, phase: 'break', startedAt: now.toISOString() })
+    await sendDiscordMessage(
+      `${MEDIA.pomodoroBreak} Cas! Spravila si 25 minut. 5 minutovy oddych zasluzenych 🌿\n\nNapisiste 'zacat' pre dalsi round.`,
+      channelId
+    )
+  } else if (pomodoro.phase === 'break' && elapsedMin >= 5) {
+    await setPomodoro(null)
+    await sendDiscordMessage(
+      `Oddych je za tebou! Pripravena na dalsi round? Napisiste 'zacat' 🎯`,
+      channelId
+    )
+  }
+}
+
+async function handleHockeyAnswer(rawText: string, channelId: string) {
+  // Try to extract opponent and date/time from the message
+  const opponentMatch = rawText.match(/proti\s+([A-Za-zÀ-žŠšČčŽžÁáÉéÍíÓóÚúÄäÔô\s]+)/i)
+  const timeMatch = rawText.match(/(\d{1,2}[:.]\d{2})|(\d{1,2}:\d{2})/)
+  const dateMatch = rawText.match(/(\d{1,2}\.\s?\d{1,2}\.?(\s?\d{4})?)|dnes|zajtra|sobota|nedela|sobotu|nedelu/i)
+
+  const opponent = opponentMatch ? opponentMatch[1].trim() : undefined
+  const matchTime = timeMatch ? timeMatch[0] : undefined
+
+  // Determine date
+  let matchDate: string | undefined
+  const now = new Date()
+  if (dateMatch) {
+    const dayText = dateMatch[0].toLowerCase()
+    if (dayText === 'dnes') {
+      matchDate = now.toISOString().slice(0, 10)
+    } else if (dayText === 'zajtra') {
+      const tomorrow = new Date(now)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      matchDate = tomorrow.toISOString().slice(0, 10)
+    }
+    // For Slovak day names or numeric dates, store as-is for now
+    else if (/\d{1,2}\.\s?\d{1,2}/.test(dayText)) {
+      const parts = dayText.match(/(\d{1,2})\.\s?(\d{1,2})/)
+      if (parts) {
+        const year = now.getFullYear()
+        const month = parts[2].padStart(2, '0')
+        const day = parts[1].padStart(2, '0')
+        matchDate = `${year}-${month}-${day}`
+      }
+    }
+  }
+
+  await saveHockeyPlan({
+    hasMatch: true,
+    opponent,
+    matchDate,
+    matchTime,
+  })
+
+  const confirmParts = ['Zapisala som! Zapas']
+  if (opponent) confirmParts.push(`proti ${opponent}`)
+  if (matchDate) confirmParts.push(`dna ${matchDate}`)
+  if (matchTime) confirmParts.push(`o ${matchTime}`)
+  confirmParts.push('🏒 Pripomeniem rano!')
+
+  await sendDiscordMessage(confirmParts.join(' '), channelId)
+}
+
+async function handleWorkoutAnswer(rawText: string, channelId: string) {
+  // Calculate current week's Monday
+  const now = new Date()
+  const day = now.getDay()
+  const diff = now.getDate() - day + (day === 0 ? -6 : 1)
+  const monday = new Date(now.setDate(diff))
+  const weekStart = monday.toISOString().slice(0, 10)
+
+  await saveWorkoutPlan({
+    plan: rawText,
+    weekStart,
+  })
+
+  await sendDiscordMessage(
+    `Super! Plan na tento tydzen zapisany 💪 Budem ta drzat zodpovednou!`,
+    channelId
+  )
 }
 
 function isArticleBriefReply(text: string): boolean {

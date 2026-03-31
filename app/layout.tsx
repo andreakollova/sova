@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'SOVA – Soňa',
   description: 'Tvoja osobná AI asistentka',
-  icons: { icon: '/favicon.ico' },
+  icons: { icon: '/faviconsona.png' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

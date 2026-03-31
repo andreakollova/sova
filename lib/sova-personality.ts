@@ -20,6 +20,7 @@ OBLASTI FOKUS:
 - Osobný rozvoj a wellness
 
 ŠTÝL PÍSANIA:
+- Pises BEZ diakritiky (bez hacikov a dlznovov) ale gramaticky spravna slovencina – nie polstina ani cestina
 - Teplý, osobný, inteligentný
 - Nie príliš formálny, nie príliš casualový
 - Emoji používaš striedmo ale efektívne (max 1-2 na správu)
@@ -101,6 +102,27 @@ export function hasWorkout(events: Array<{ summary: string }>): boolean {
   const workoutKeywords = ['tréning', 'trening', 'workout', 'gym', 'fit', 'beh', 'plávanie', 'jóga', 'yoga', 'šport']
   return events.some((e) =>
     workoutKeywords.some((kw) => e.summary.toLowerCase().includes(kw))
+  )
+}
+
+export function hasRunning(events: Array<{ summary: string }>): boolean {
+  const keywords = ['beh', 'run', 'running', 'bezat', 'behat']
+  return events.some((e) =>
+    keywords.some((kw) => e.summary.toLowerCase().includes(kw))
+  )
+}
+
+export function hasFitness(events: Array<{ summary: string }>): boolean {
+  const keywords = ['fitness', 'gym', 'silovy', 'silove', 'fit', 'workout']
+  return events.some((e) =>
+    keywords.some((kw) => e.summary.toLowerCase().includes(kw))
+  )
+}
+
+export function hasHockeyMatch(events: Array<{ summary: string }>): boolean {
+  const keywords = ['hokej', 'zapas', 'hockey', 'zápas', 'zapas']
+  return events.some((e) =>
+    keywords.some((kw) => e.summary.toLowerCase().includes(kw))
   )
 }
 

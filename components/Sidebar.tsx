@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { LayoutDashboard, CheckSquare, Feather, Settings, Sparkles, ShieldAlert } from 'lucide-react'
+import Image from 'next/image'
+import { LayoutDashboard, CheckSquare, Feather, Settings, ShieldAlert } from 'lucide-react'
 
 const nav = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', id: 'dashboard' },
@@ -16,8 +17,8 @@ export default function Sidebar({ active }: { active: string }) {
     <aside className="w-16 lg:w-56 flex flex-col h-screen bg-[#0D0920] border-r border-white/[0.06] shrink-0">
       {/* Logo */}
       <div className="p-4 lg:p-5 flex items-center gap-3 border-b border-white/[0.06]">
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shrink-0 sova-glow">
-          <Sparkles size={16} className="text-white" />
+        <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0" style={{ background: 'linear-gradient(135deg, #082f5d, #0b114e)' }}>
+          <Image src="/robutka.png" alt="SOVA" width={32} height={32} className="w-full h-full object-cover" />
         </div>
         <div className="hidden lg:block">
           <p className="font-bold text-sm leading-tight">SOVA</p>

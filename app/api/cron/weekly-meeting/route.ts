@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { getSettings, isWithinTimeWindow, KEYS, saveLinkedInResearch, type GeneratedContent } from '@/lib/kv'
+import { getSettings, isWithinTimeWindow, KEYS, saveLinkedInResearch, setMondayQuestionsSent, type GeneratedContent } from '@/lib/kv'
 import { sendDiscordMessage, formatWeeklyMeeting } from '@/lib/discord'
 import { getWeekEvents } from '@/lib/google-calendar'
 import { getTopPriorityTasks } from '@/lib/tasks'
@@ -78,6 +78,20 @@ Buď konkrétna, povzbudzujúca a priamo ku veci. Žiadne klišé.`,
     })
 
     await sendDiscordMessage(message, settings.discordChannelId)
+
+    // Send Monday planning questions
+    await sendDiscordMessage(
+      `Majte tento vikend zapas? Ak ano, napisite proti komu hraju a kedy 🏒`,
+      settings.discordChannelId
+    )
+    await sendDiscordMessage(
+      `Ako planuje cvicit tento tydzen? Napisite plan a ja si ho zapisem 💪`,
+      settings.discordChannelId
+    )
+
+    // Save that Monday questions were sent today
+    const todayStr = new Date().toISOString().slice(0, 10)
+    await setMondayQuestionsSent(todayStr)
 
     return NextResponse.json({ success: true })
   } catch (err) {

@@ -17,6 +17,8 @@ export const KEYS = {
   CRON_MORNING_LAST: 'sova:cron:morning:last',
   CRON_EVENING_LAST: 'sova:cron:evening:last',
   CRON_WEEKLY_LAST: 'sova:cron:weekly:last',
+  CRON_MIDDAY_LAST: 'sova:cron:midday:last',
+  CRON_GOODNIGHT_LAST: 'sova:cron:goodnight:last',
   LINKEDIN_RESEARCH: 'sova:linkedin_research',
   ARTICLE_DRAFTS: 'sova:article_drafts',
   // Admin layer
@@ -26,6 +28,13 @@ export const KEYS = {
   KAMOSKA_LAST_MSG: 'discord:last_message:kamoska',
   // Task sessions
   TASK_SESSION: 'session:current',
+  // Hockey & workout planning
+  HOCKEY_PLAN: 'sova:hockey_plan',
+  WORKOUT_PLAN: 'sova:workout_plan',
+  MONDAY_QUESTIONS_SENT: 'sova:monday_questions_sent',
+  WORKOUT_CHECK_SENT: 'sova:workout_check_sent',
+  // Pomodoro
+  POMODORO: 'sova:pomodoro',
 }
 
 export interface Settings {
@@ -183,6 +192,64 @@ export async function setTaskSession(session: TaskSession | null): Promise<void>
     await redis.del(KEYS.TASK_SESSION)
   } else {
     await redis.set(KEYS.TASK_SESSION, session, { ex: 60 * 60 * 12 }) // 12h TTL
+  }
+}
+
+// ─── Hockey & Workout Plans ────────────────────────────────────────────────
+
+export interface HockeyPlan {
+  hasMatch: boolean
+  opponent?: string
+  matchDate?: string  // YYYY-MM-DD
+  matchTime?: string
+}
+
+export interface WorkoutPlan {
+  plan: string
+  weekStart: string  // YYYY-MM-DD (Monday)
+}
+
+export async function getHockeyPlan(): Promise<HockeyPlan | null> {
+  return redis.get<HockeyPlan>(KEYS.HOCKEY_PLAN)
+}
+
+export async function saveHockeyPlan(plan: HockeyPlan): Promise<void> {
+  await redis.set(KEYS.HOCKEY_PLAN, plan)
+}
+
+export async function getWorkoutPlan(): Promise<WorkoutPlan | null> {
+  return redis.get<WorkoutPlan>(KEYS.WORKOUT_PLAN)
+}
+
+export async function saveWorkoutPlan(plan: WorkoutPlan): Promise<void> {
+  await redis.set(KEYS.WORKOUT_PLAN, plan)
+}
+
+export async function getMondayQuestionsSent(): Promise<string | null> {
+  return redis.get<string>(KEYS.MONDAY_QUESTIONS_SENT)
+}
+
+export async function setMondayQuestionsSent(date: string): Promise<void> {
+  await redis.set(KEYS.MONDAY_QUESTIONS_SENT, date)
+}
+
+// ─── Pomodoro ──────────────────────────────────────────────────────────────
+
+export interface PomodoroSession {
+  phase: 'work' | 'break'
+  startedAt: string  // ISO timestamp
+  round: number
+}
+
+export async function getPomodoro(): Promise<PomodoroSession | null> {
+  return redis.get<PomodoroSession>(KEYS.POMODORO)
+}
+
+export async function setPomodoro(session: PomodoroSession | null): Promise<void> {
+  if (session === null) {
+    await redis.del(KEYS.POMODORO)
+  } else {
+    await redis.set(KEYS.POMODORO, session)
   }
 }
 
