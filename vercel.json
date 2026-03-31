@@ -1,11 +1,5 @@
 {
   "crons": [
-    { "path": "/api/cron/morning", "schedule": "*/15 6-11 * * *" },
-    { "path": "/api/cron/evening", "schedule": "*/15 18-22 * * *" },
-    { "path": "/api/cron/midday", "schedule": "0 12 * * *" },
-    { "path": "/api/cron/gmail-check", "schedule": "*/30 7-19 * * 1-5" },
-    { "path": "/api/cron/pre-task-reminder", "schedule": "*/15 18-22 * * *" },
-    { "path": "/api/cron/weekly-meeting", "schedule": "*/15 6-11 * * 1" },
-    { "path": "/api/cron/admin-listener", "schedule": "*/5 * * * *" }
+    { "path": "/api/cron/master", "schedule": "*/15 * * * *" }
   ]
 }

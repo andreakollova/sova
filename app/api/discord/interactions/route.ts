@@ -57,7 +57,7 @@ async function handleButtonClick(
   interaction: any
 ) {
   const settings = await getSettings()
-  const kamoskaChannel = process.env.DISCORD_KAMOSKA_CHANNEL_ID ?? channelId
+  const kamoskaChannel = process.env.DISCORD_CHANNEL_ID ?? channelId
   const userName = settings.userName
 
   if (customId === 'start_session') {

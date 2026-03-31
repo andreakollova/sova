@@ -85,7 +85,7 @@ async function processAdminChannel() {
 }
 
 async function injectInstructionImmediately(instr: AdminInstruction, userName: string) {
-  const kamoskaChannel = process.env.DISCORD_KAMOSKA_CHANNEL_ID
+  const kamoskaChannel = process.env.DISCORD_CHANNEL_ID
   if (!kamoskaChannel) return
 
   const res = await client.messages.create({
@@ -112,7 +112,7 @@ Prepíš to ako SVOJU VLASTNÚ prirodzenú správu pre ${userName}. Musí to zni
 // ─── Kamoška channel: detect "úlohy" trigger ────────────────────────────
 
 async function processKamoskaChannel() {
-  const kamoskaChannel = process.env.DISCORD_KAMOSKA_CHANNEL_ID
+  const kamoskaChannel = process.env.DISCORD_CHANNEL_ID
   if (!kamoskaChannel) return
 
   const lastMsgId = await redis.get<string>(KEYS.KAMOSKA_LAST_MSG) ?? undefined

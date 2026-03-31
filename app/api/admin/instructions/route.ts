@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
     const settings = await getSettings()
-    const kamoskaChannel = process.env.DISCORD_KAMOSKA_CHANNEL_ID ?? settings.discordChannelId
+    const kamoskaChannel = process.env.DISCORD_CHANNEL_ID ?? settings.discordChannelId
 
     const res = await client.messages.create({
       model: 'claude-opus-4-5',
