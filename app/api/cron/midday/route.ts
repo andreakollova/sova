@@ -1,0 +1,55 @@
+import { NextRequest, NextResponse } from 'next/server'
+import Anthropic from '@anthropic-ai/sdk'
+import { getSettings } from '@/lib/kv'
+import { sendDiscordMessage } from '@/lib/discord'
+import { getTodayEvents } from '@/lib/google-calendar'
+import { getTopPriorityTasks } from '@/lib/tasks'
+
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+
+export async function GET(req: NextRequest) {
+  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const [settings, events, tasks] = await Promise.all([
+      getSettings(),
+      getTodayEvents(),
+      getTopPriorityTasks(3),
+    ])
+
+    const afternoonEvents = events.filter((e) => {
+      const hour = parseInt(e.start.split(':')[0])
+      return hour >= 12
+    })
+
+    const hasBackToBack = events.length >= 3
+
+    const msgRes = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 300,
+      messages: [
+        {
+          role: 'user',
+          content: `Napíš krátku poludňajšiu správu pre Natku v slovenčine (max 5 viet).
+Zahrň: povzbudenie do poobedia, 1-2 priority na odpoludnie, osobnú poznámku.
+${hasBackToBack ? 'Má dnes veľa stretnutí – pripomeň jej aby sa najedla a oddýchla.' : ''}
+Poobedné udalosti: ${afternoonEvents.map((e) => e.summary).join(', ') || 'voľné'}
+Priority: ${tasks.map((t) => t.title).join(', ') || 'žiadne'}
+Buď stručná, teplá, konkrétna. Max 1 emoji.`,
+        },
+      ],
+    })
+
+    const msg = msgRes.content[0].type === 'text' ? msgRes.content[0].text : ''
+    const name = Math.random() > 0.5 ? settings.userName : 'Fondula'
+
+    await sendDiscordMessage(`☀️ **Poludnie, ${name}!**\n\n${msg}`, settings.discordChannelId)
+
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    console.error('Midday cron error:', err)
+    return NextResponse.json({ error: String(err) }, { status: 500 })
+  }
+}
