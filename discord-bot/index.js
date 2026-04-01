@@ -1,6 +1,5 @@
 const { Client, GatewayIntentBits } = require('discord.js')
 const Anthropic = require('@anthropic-ai/sdk')
-const { Redis } = require('@upstash/redis')
 
 const client = new Client({
   intents: [
@@ -11,10 +10,24 @@ const client = new Client({
 })
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL,
-  token: process.env.KV_REST_API_TOKEN,
-})
+const SOVA_URL = process.env.SOVA_URL ?? 'https://sova-phi.vercel.app'
+const CRON_SECRET = process.env.CRON_SECRET
+
+async function kvGet(key) {
+  const res = await fetch(`${SOVA_URL}/api/bot/memory?key=${encodeURIComponent(key)}`, {
+    headers: { authorization: `Bearer ${CRON_SECRET}` },
+  })
+  const data = await res.json()
+  return data.value
+}
+
+async function kvSet(key, value) {
+  await fetch(`${SOVA_URL}/api/bot/memory`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${CRON_SECRET}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ key, value }),
+  })
+}
 
 const CHANNEL_ID = process.env.DISCORD_CHANNEL_ID
 const USER_NAME = process.env.USER_NAME ?? 'Natka'
@@ -53,8 +66,8 @@ const PLANNING_QUESTIONS = [
 
 async function savePlan(data) {
   try {
-    const existing = await redis.get('sova:weekly_plan') ?? {}
-    await redis.set('sova:weekly_plan', { ...existing, ...data, updatedAt: new Date().toISOString() })
+    const existing = await kvGet('sova:weekly_plan') ?? {}
+    await kvSet('sova:weekly_plan', { ...existing, ...data, updatedAt: new Date().toISOString() })
   } catch (e) {
     console.error('KV save error:', e)
   }
@@ -62,9 +75,9 @@ async function savePlan(data) {
 
 async function saveReminder(text) {
   try {
-    const reminders = await redis.get('sova:reminders') ?? []
+    const reminders = await kvGet('sova:reminders') ?? []
     reminders.push({ text, createdAt: new Date().toISOString() })
-    await redis.set('sova:reminders', reminders.slice(-20))
+    await kvSet('sova:reminders', reminders.slice(-20))
   } catch (e) {
     console.error('KV reminder error:', e)
   }
