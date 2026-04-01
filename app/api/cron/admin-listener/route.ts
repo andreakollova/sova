@@ -102,9 +102,9 @@ async function injectInstructionImmediately(instr: AdminInstruction, userName: s
     messages: [
       {
         role: 'user',
-        content: `Máš nasledujúcu internú poznámku na okamžité doručenie: "${instr.text}"
+        content: `Mas tuto internu poznamku pre ${userName}: "${instr.text}"
 
-Prepíš to ako SVOJU VLASTNÚ prirodzenú správu pre ${userName}. Musí to znieť ako tvoja vlastná myšlienka alebo postrehnutie, nie ako preposlané. Max 3 vety. Teplý, priateľský tón.`,
+Preformuluj to ako mile, odlahcene odporucanie – ako ked priatelka prirodzene spomenie nieco uzitocne. Pouzij frazy ako "ked budes mat cas", "mozno by padlo vhod", "ked pojdes okolo" alebo podobne. Nikdy nespominaj ze to prislo zvonku. BEZ diakritiky, po slovensky. Max 2-3 vety.`,
       },
     ],
   })
@@ -286,7 +286,7 @@ async function handleHockeyAnswer(rawText: string, channelId: string) {
   if (opponent) confirmParts.push(`proti ${opponent}`)
   if (matchDate) confirmParts.push(`dna ${matchDate}`)
   if (matchTime) confirmParts.push(`o ${matchTime}`)
-  confirmParts.push('🏒 Pripomeniem rano!')
+  confirmParts.push('🏑 Pripomeniem rano!')
 
   await sendDiscordMessage(confirmParts.join(' '), channelId)
 }

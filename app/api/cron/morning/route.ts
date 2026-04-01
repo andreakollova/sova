@@ -108,7 +108,7 @@ Buď konkrétna, teplá, nikdy generická. Ak máš inštrukcie vyššie, zakomp
       if (hockeyPlan.matchDate === todayDateStr) {
         const opponentInfo = hockeyPlan.opponent ? ` Dnes hraš proti ${hockeyPlan.opponent}!` : ''
         await sendDiscordMessage(
-          `🏒🏒🏒 Dnes je zapas!${opponentInfo}`,
+          `🏑🏑🏑 Dnes je zapas!${opponentInfo}`,
           settings.discordChannelId
         )
       }

@@ -81,7 +81,7 @@ Buď konkrétna, povzbudzujúca a priamo ku veci. Žiadne klišé.`,
 
     // Send Monday planning questions
     await sendDiscordMessage(
-      `Majte tento vikend zapas? Ak ano, napisite proti komu hraju a kedy 🏒`,
+      `Majte tento vikend zapas? Ak ano, napisite proti komu hraju a kedy 🏑`,
       settings.discordChannelId
     )
     await sendDiscordMessage(
