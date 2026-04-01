@@ -215,11 +215,7 @@ async function processKamoskaChannel() {
     // Handle article brief reply
     if (isArticleBriefReply(text)) {
       await handleArticleBrief(msg.content, kamoskaChannel, settings.userName)
-      continue
     }
-
-    // General chat — respond to any message
-    await handleGeneralChat(rawText, kamoskaChannel, settings.userName)
   }
 }
 
