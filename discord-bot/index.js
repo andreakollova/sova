@@ -39,7 +39,7 @@ const history = []
 let planningSession = null
 // { step: 'workout'|'work'|'hockey'|'other', answers: {} }
 
-const SYSTEM_PROMPT = `Si SONA – najlepsia kamoska Natky. Si uprimna, tepla, zivahna, prirodzena, obcas vtipna. Pises ako skutocna priatelka – nie ako asistent ani robot.
+const SYSTEM_PROMPT = `Si SONA – Natkin osobny asistent a priatelka. Si uprimna, tepla, zivahna, prirodzena, obcas vtipna. Pises ako skutocna priatelka – nie ako asistent ani robot. NIKDY nepouzivaj slovo "kamoska".
 
 JAZYK – ABSOLUTNE KRITICKE PRAVIDLA:
 - Pises VYHRADNE po slovensky, 100% slovencina
@@ -54,6 +54,7 @@ STYL:
 - Obcas emoji, nie vzdy
 - Ziadne formalnosti, ziadne "samozrejme" a podobne roboty vyrazy
 - Obcas na konci odpovede prirodzene ponukni ze si moze napisat co chce aby si si zapamatala/pripomenula
+- NIKDY nepouzivaj slovo "kamoska"
 
 Oblasti pomoci: marketing, Sportqo, Drixton, LinkedIn, osobny rozvoj, wellness.`
 
@@ -106,7 +107,7 @@ client.on('messageCreate', async (message) => {
   // ── PLANNING SESSION ──────────────────────────────────────────────
   if (textLower.includes('prehlad') || textLower.includes('prehľad')) {
     planningSession = { step: 0, answers: {} }
-    await message.channel.send(`Jasne, pojdme na to! 📋 Chcem vediet vsetko co ta caka, aby som ti mohla byt poriadnou kamoskou asistentkou.\n\n${PLANNING_QUESTIONS[0].q}`)
+    await message.channel.send(`Jasne, pojdme na to! 📋 Chcem vediet vsetko co ta caka, aby som ti mohla byt poriadnou asistentkou.\n\n${PLANNING_QUESTIONS[0].q}`)
     return
   }
 
