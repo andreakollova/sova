@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Sidebar from '@/components/Sidebar'
-import { Settings, Bell, Mail, User, Clock, Plus, X, Save } from 'lucide-react'
+import { Bell, Mail, User, Clock, Plus, X, Save, Dumbbell, Hash, Globe } from 'lucide-react'
 
 interface UserSettings {
   morningTime: string
@@ -10,20 +10,56 @@ interface UserSettings {
   watchedEmails: string[]
   discordChannelId: string
   userName: string
+  userEmail: string
   timezone: string
+  morningBriefingTime: string
+  eveningBriefingTime: string
+  workoutTypes: string[]
+  workoutDays: string[]
+  discordKamoskaId: string
+  discordAdminId: string
+}
+
+const WORKOUT_OPTIONS = [
+  { id: 'beh', label: 'Beh' },
+  { id: 'fitness', label: 'Fitness' },
+  { id: 'hokej', label: 'Hokej' },
+  { id: 'plavanie', label: 'Plavanie' },
+  { id: 'joga', label: 'Joga' },
+  { id: 'inne', label: 'Ine' },
+]
+
+const DAY_OPTIONS = [
+  { id: 'po', label: 'Po' },
+  { id: 'ut', label: 'Ut' },
+  { id: 'st', label: 'St' },
+  { id: 'st2', label: 'St' },
+  { id: 'pi', label: 'Pi' },
+  { id: 'so', label: 'So' },
+  { id: 'ne', label: 'Ne' },
+]
+
+const DAY_LABELS = ['Pondelok', 'Utorok', 'Streda', 'Stvrtok', 'Piatok', 'Sobota', 'Nedela']
+const DAY_IDS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+
+const DEFAULT_SETTINGS: UserSettings = {
+  morningTime: '08:30',
+  eveningTime: '20:00',
+  watchedEmails: [],
+  discordChannelId: '',
+  userName: 'Natka',
+  userEmail: '',
+  timezone: 'Europe/Bratislava',
+  morningBriefingTime: '08:00',
+  eveningBriefingTime: '20:00',
+  workoutTypes: [],
+  workoutDays: [],
+  discordKamoskaId: '',
+  discordAdminId: '',
 }
 
 export default function SettingsPage() {
-  const [adminChannelId, setAdminChannelId] = useState('')
-  const [kamoskaChannelId, setKamoskaChannelId] = useState('')
-  const [settings, setSettings] = useState<UserSettings>({
-    morningTime: '08:30',
-    eveningTime: '20:00',
-    watchedEmails: [],
-    discordChannelId: '',
-    userName: 'Natka',
-    timezone: 'Europe/Bratislava',
-  })
+  const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS)
   const [newEmail, setNewEmail] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -31,7 +67,7 @@ export default function SettingsPage() {
   useEffect(() => {
     fetch('/api/settings')
       .then((r) => r.json())
-      .then(setSettings)
+      .then((data) => setSettings({ ...DEFAULT_SETTINGS, ...data }))
       .catch(console.error)
   }, [])
 
@@ -45,7 +81,7 @@ export default function SettingsPage() {
       })
       if (res.ok) {
         setSaved(true)
-        setTimeout(() => setSaved(false), 2000)
+        setTimeout(() => setSaved(false), 2500)
       }
     } finally {
       setSaving(false)
@@ -53,7 +89,7 @@ export default function SettingsPage() {
   }
 
   function addEmail() {
-    if (newEmail && !settings.watchedEmails.includes(newEmail)) {
+    if (newEmail && !settings.watchedEmails.includes(newEmail.trim())) {
       setSettings((s) => ({ ...s, watchedEmails: [...s.watchedEmails, newEmail.trim()] }))
       setNewEmail('')
     }
@@ -63,31 +99,64 @@ export default function SettingsPage() {
     setSettings((s) => ({ ...s, watchedEmails: s.watchedEmails.filter((e) => e !== email) }))
   }
 
+  function toggleWorkoutType(type: string) {
+    setSettings((s) => ({
+      ...s,
+      workoutTypes: s.workoutTypes.includes(type)
+        ? s.workoutTypes.filter((t) => t !== type)
+        : [...s.workoutTypes, type],
+    }))
+  }
+
+  function toggleWorkoutDay(day: string) {
+    setSettings((s) => ({
+      ...s,
+      workoutDays: s.workoutDays.includes(day)
+        ? s.workoutDays.filter((d) => d !== day)
+        : [...s.workoutDays, day],
+    }))
+  }
+
   return (
-    <div className="flex h-screen bg-[#0A0614] overflow-hidden">
+    <div className="flex h-screen dark:bg-[#0b114e] bg-gray-50 overflow-hidden">
       <Sidebar active="settings" />
-      <main className="flex-1 overflow-auto p-6">
-        <div className="max-w-2xl mx-auto space-y-6">
+
+      <main className="flex-1 overflow-auto p-5 lg:p-7">
+        <div className="max-w-2xl mx-auto space-y-5">
+
+          {/* Header */}
           <div>
             <h1 className="text-2xl font-bold gradient-text">Nastavenia</h1>
-            <p className="text-muted-foreground text-sm mt-1">Prispôsob si Soňu podľa seba</p>
+            <p className="text-muted-foreground text-sm mt-1">Prispôsob si Sonu podla seba</p>
           </div>
 
-          {/* Personal */}
-          <Card title="Osobné" icon={<User size={16} className="text-purple-400" />}>
-            <Field label="Tvoje meno">
-              <input
-                value={settings.userName}
-                onChange={(e) => setSettings((s) => ({ ...s, userName: e.target.value }))}
-                className="input"
-              />
-            </Field>
-          </Card>
+          {/* ── Profil ── */}
+          <Section title="Profil" icon={<User size={15} className="text-orange-500" />}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Meno">
+                <input
+                  value={settings.userName}
+                  onChange={(e) => setSettings((s) => ({ ...s, userName: e.target.value }))}
+                  placeholder="Tvoje meno"
+                  className="input"
+                />
+              </Field>
+              <Field label="Email">
+                <input
+                  type="email"
+                  value={settings.userEmail || ''}
+                  onChange={(e) => setSettings((s) => ({ ...s, userEmail: e.target.value }))}
+                  placeholder="tvoj@email.com"
+                  className="input"
+                />
+              </Field>
+            </div>
+          </Section>
 
-          {/* Notifications */}
-          <Card title="Notifikácie" icon={<Bell size={16} className="text-purple-400" />}>
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Ranné zhrnutie">
+          {/* ── Moj rezim ── */}
+          <Section title="Moj rezim" icon={<Clock size={15} className="text-orange-500" />}>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Field label="Rano vstajem">
                 <input
                   type="time"
                   value={settings.morningTime}
@@ -95,7 +164,7 @@ export default function SettingsPage() {
                   className="input"
                 />
               </Field>
-              <Field label="Večerné zhrnutie">
+              <Field label="Vecer chodim spat">
                 <input
                   type="time"
                   value={settings.eveningTime}
@@ -103,50 +172,86 @@ export default function SettingsPage() {
                   className="input"
                 />
               </Field>
+              <Field label="Casova zona">
+                <select
+                  value={settings.timezone}
+                  onChange={(e) => setSettings((s) => ({ ...s, timezone: e.target.value }))}
+                  className="input"
+                >
+                  <option value="Europe/Bratislava">Europe/Bratislava</option>
+                  <option value="Europe/Prague">Europe/Prague</option>
+                  <option value="Europe/Berlin">Europe/Berlin</option>
+                  <option value="UTC">UTC</option>
+                </select>
+              </Field>
             </div>
-          </Card>
+          </Section>
 
-          {/* Discord */}
-          <Card title="Discord Kanály" icon={<Bell size={16} className="text-indigo-400" />}>
-            <Field label="Hlavný kanál (kde Soňa píše tebe)">
-              <input
-                value={settings.discordChannelId}
-                onChange={(e) => setSettings((s) => ({ ...s, discordChannelId: e.target.value }))}
-                placeholder="#sova-main channel ID"
-                className="input"
-              />
+          {/* ── Cvicenie ── */}
+          <Section title="Cvicenie" icon={<Dumbbell size={15} className="text-orange-500" />}>
+            <Field label="Typy cvicenia">
+              <div className="flex flex-wrap gap-2 mt-1">
+                {WORKOUT_OPTIONS.map(({ id, label }) => {
+                  const active = settings.workoutTypes.includes(id)
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => toggleWorkoutType(id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
+                        active
+                          ? 'text-white border-orange-500/0'
+                          : 'dark:bg-white/5 dark:border-white/10 dark:text-muted-foreground bg-gray-100 border-gray-200 text-gray-600 hover:border-orange-300'
+                      }`}
+                      style={active ? { background: 'linear-gradient(135deg, #FF7F00, #e06000)' } : {}}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
             </Field>
-            <Field label="#sova-kamoska – kanál kamoškky">
-              <input
-                value={kamoskaChannelId}
-                onChange={(e) => setKamoskaChannelId(e.target.value)}
-                placeholder="Channel ID"
-                className="input"
-              />
-            </Field>
-            <Field label="#admin-sona – súkromný admin kanál">
-              <input
-                value={adminChannelId}
-                onChange={(e) => setAdminChannelId(e.target.value)}
-                placeholder="Channel ID"
-                className="input"
-              />
-            </Field>
-            <p className="text-xs text-muted-foreground mt-1">
-              Pravý klik na kanál v Discorde → Copy Channel ID (zapni Developer Mode)
-            </p>
-          </Card>
 
-          {/* Watched emails */}
-          <Card title="Sledované emailové adresy" icon={<Mail size={16} className="text-purple-400" />}>
+            <Field label="Typicke dni cvicenia">
+              <div className="flex flex-wrap gap-2 mt-1">
+                {DAY_IDS.map((id, idx) => {
+                  const active = settings.workoutDays.includes(id)
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => toggleWorkoutDay(id)}
+                      className={`w-10 h-10 rounded-xl text-xs font-medium border transition-all ${
+                        active
+                          ? 'text-white border-orange-500/0'
+                          : 'dark:bg-white/5 dark:border-white/10 dark:text-muted-foreground bg-gray-100 border-gray-200 text-gray-600'
+                      }`}
+                      style={active ? { background: 'linear-gradient(135deg, #FF7F00, #e06000)' } : {}}
+                    >
+                      {DAY_LABELS[idx].slice(0, 2)}
+                    </button>
+                  )
+                })}
+              </div>
+            </Field>
+          </Section>
+
+          {/* ── Sledovane emaily ── */}
+          <Section title="Sledovane emailove adresy" icon={<Mail size={15} className="text-orange-500" />}>
             <div className="space-y-2 mb-3">
+              {settings.watchedEmails.length === 0 && (
+                <p className="text-xs text-muted-foreground">Zatial ziadne sledovane adresy</p>
+              )}
               {settings.watchedEmails.map((email) => (
                 <div
                   key={email}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10"
+                  className="flex items-center justify-between px-3 py-2 rounded-xl dark:bg-white/5 dark:border-white/10 bg-gray-50 border border-gray-200"
                 >
                   <span className="text-sm">{email}</span>
-                  <button onClick={() => removeEmail(email)} className="text-muted-foreground hover:text-red-400 transition-colors">
+                  <button
+                    onClick={() => removeEmail(email)}
+                    className="text-muted-foreground hover:text-red-400 transition-colors"
+                  >
                     <X size={14} />
                   </button>
                 </div>
@@ -157,18 +262,81 @@ export default function SettingsPage() {
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addEmail()}
-                placeholder="nový@email.com"
+                placeholder="novy@email.com"
                 className="input flex-1"
               />
-              <button onClick={addEmail} className="btn-secondary px-3">
-                <Plus size={16} />
+              <button
+                onClick={addEmail}
+                className="btn-primary px-3 py-2 flex items-center justify-center"
+              >
+                <Plus size={15} />
               </button>
             </div>
-          </Card>
+          </Section>
 
-          <button onClick={save} disabled={saving} className="btn-primary w-full flex items-center justify-center gap-2">
+          {/* ── Discord ── */}
+          <Section title="Discord kanaly" icon={<Hash size={15} className="text-orange-500" />}>
+            <div className="space-y-3">
+              <Field label="Hlavny kanal (kde Sona píse tebe)">
+                <input
+                  value={settings.discordChannelId}
+                  onChange={(e) => setSettings((s) => ({ ...s, discordChannelId: e.target.value }))}
+                  placeholder="#sova-main – Channel ID"
+                  className="input"
+                />
+              </Field>
+              <Field label="#sova-kamoska – kanal kamosky">
+                <input
+                  value={settings.discordKamoskaId || ''}
+                  onChange={(e) => setSettings((s) => ({ ...s, discordKamoskaId: e.target.value }))}
+                  placeholder="Channel ID"
+                  className="input"
+                />
+              </Field>
+              <Field label="#admin-sona – sukromny admin kanal">
+                <input
+                  value={settings.discordAdminId || ''}
+                  onChange={(e) => setSettings((s) => ({ ...s, discordAdminId: e.target.value }))}
+                  placeholder="Channel ID"
+                  className="input"
+                />
+              </Field>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Pravy klik na kanal v Discorde → Copy Channel ID (zapni Developer Mode)
+            </p>
+          </Section>
+
+          {/* ── Notifikacie ── */}
+          <Section title="Notifikacie" icon={<Bell size={15} className="text-orange-500" />}>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Rane zhrnutie">
+                <input
+                  type="time"
+                  value={settings.morningBriefingTime}
+                  onChange={(e) => setSettings((s) => ({ ...s, morningBriefingTime: e.target.value }))}
+                  className="input"
+                />
+              </Field>
+              <Field label="Vecerne zhrnutie">
+                <input
+                  type="time"
+                  value={settings.eveningBriefingTime}
+                  onChange={(e) => setSettings((s) => ({ ...s, eveningBriefingTime: e.target.value }))}
+                  className="input"
+                />
+              </Field>
+            </div>
+          </Section>
+
+          {/* Save */}
+          <button
+            onClick={save}
+            disabled={saving}
+            className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-base"
+          >
             <Save size={16} />
-            {saving ? 'Ukladám...' : saved ? 'Uložené!' : 'Uložiť nastavenia'}
+            {saving ? 'Ukladam...' : saved ? 'Ulozene!' : 'Ulozit nastavenia'}
           </button>
         </div>
       </main>
@@ -176,10 +344,18 @@ export default function SettingsPage() {
   )
 }
 
-function Card({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+function Section({
+  title,
+  icon,
+  children,
+}: {
+  title: string
+  icon: React.ReactNode
+  children: React.ReactNode
+}) {
   return (
-    <div className="sova-border rounded-2xl p-5 bg-white/[0.03] space-y-4">
-      <div className="flex items-center gap-2">
+    <div className="sova-border rounded-2xl p-5 dark:bg-[#0a1050]/80 bg-white space-y-4 shadow-sm">
+      <div className="flex items-center gap-2 pb-1 border-b dark:border-white/[0.07] border-gray-100">
         {icon}
         <h2 className="font-semibold text-sm">{title}</h2>
       </div>
@@ -191,7 +367,7 @@ function Card({ title, icon, children }: { title: string; icon: React.ReactNode;
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-xs text-muted-foreground">{label}</label>
+      <label className="text-xs text-muted-foreground font-medium">{label}</label>
       {children}
     </div>
   )

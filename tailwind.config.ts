@@ -51,15 +51,19 @@ const config: Config = {
         },
         sova: {
           orange: '#FF7F00',
+          'orange-light': '#ffb347',
           'blue-start': '#082f5d',
           'blue-end': '#0b114e',
-          purple: '#8B5CF6',
-          violet: '#7C3AED',
-          pink: '#EC4899',
-          dark: '#0F0A1E',
-          card: '#1A1033',
-          border: '#2D1F5E',
+          'blue-mid': '#0d1a5e',
+          dark: '#0b114e',
+          'dark-sidebar': '#080e42',
+          card: '#0f1a5a',
         },
+      },
+      backgroundImage: {
+        'sova-gradient': 'linear-gradient(135deg, #082f5d, #0b114e)',
+        'orange-gradient': 'linear-gradient(135deg, #FF7F00, #e06000)',
+        'hero-overlay': 'linear-gradient(to bottom, rgba(8,47,93,0.7) 0%, rgba(11,17,78,0.85) 100%)',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -80,8 +84,12 @@ const config: Config = {
           '100%': { backgroundPosition: '200% 0' },
         },
         'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(139, 92, 246, 0.3)' },
-          '50%': { boxShadow: '0 0 40px rgba(139, 92, 246, 0.6)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(255, 127, 0, 0.3)' },
+          '50%': { boxShadow: '0 0 40px rgba(255, 127, 0, 0.6)' },
+        },
+        'fade-in': {
+          from: { opacity: '0', transform: 'translateY(10px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
         },
       },
       animation: {
@@ -89,6 +97,7 @@ const config: Config = {
         'accordion-up': 'accordion-up 0.2s ease-out',
         shimmer: 'shimmer 2s infinite linear',
         'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+        'fade-in': 'fade-in 0.4s ease-out',
       },
     },
   },

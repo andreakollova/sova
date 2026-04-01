@@ -5,15 +5,17 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'SOVA – Soňa',
-  description: 'Tvoja osobná AI asistentka',
+  title: 'SOVA – Tvoja AI asistentka',
+  description: 'Tvoja osobna AI asistentka Sona',
   icons: { icon: '/faviconsona.png' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="sk" className="dark">
-      <body className={`${inter.className} min-h-screen bg-[#0A0614]`}>{children}</body>
+      <body className={`${inter.className} min-h-screen bg-[#0b114e] dark:bg-[#0b114e]`}>
+        {children}
+      </body>
     </html>
   )
 }

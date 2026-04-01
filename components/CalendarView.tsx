@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, ChevronRight, Dumbbell } from 'lucide-react'
+import { Calendar, Dumbbell } from 'lucide-react'
 
 interface CalendarEvent {
   id: string
@@ -10,7 +10,7 @@ interface CalendarEvent {
   end: string
 }
 
-const WORKOUT_KW = ['tréning', 'trening', 'workout', 'gym', 'beh', 'plávanie', 'jóga', 'yoga']
+const WORKOUT_KW = ['trening', 'tréning', 'workout', 'gym', 'beh', 'plavanie', 'joga', 'yoga']
 
 export default function CalendarView() {
   const [todayEvents, setTodayEvents] = useState<CalendarEvent[]>([])
@@ -33,19 +33,22 @@ export default function CalendarView() {
   const events = tab === 'today' ? todayEvents : tomorrowEvents
 
   return (
-    <div className="sova-border rounded-2xl bg-[#0D0920] overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+    <div className="sova-border rounded-2xl overflow-hidden dark:bg-[#0a1050] bg-white">
+      <div className="flex items-center justify-between px-4 py-3 border-b dark:border-white/[0.07] border-gray-100">
         <div className="flex items-center gap-2">
-          <Calendar size={15} className="text-purple-400" />
-          <span className="text-sm font-medium">Kalendár</span>
+          <Calendar size={15} className="text-orange-500" />
+          <span className="text-sm font-medium">Kalendar</span>
         </div>
         <div className="flex gap-1">
           {(['today', 'tomorrow'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-2.5 py-1 rounded-lg text-xs transition-colors
-                ${tab === t ? 'bg-purple-500/20 text-purple-300' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors
+                ${tab === t
+                  ? 'text-white'
+                  : 'text-muted-foreground dark:hover:text-white hover:text-gray-700'}`}
+              style={tab === t ? { background: 'linear-gradient(135deg, #FF7F00, #e06000)' } : {}}
             >
               {t === 'today' ? 'Dnes' : 'Zajtra'}
             </button>
@@ -56,10 +59,10 @@ export default function CalendarView() {
       <div className="p-3 space-y-2 min-h-[120px]">
         {loading ? (
           <div className="flex items-center justify-center h-20">
-            <div className="w-5 h-5 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
           </div>
         ) : events.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-6">Žiadne udalosti</p>
+          <p className="text-xs text-muted-foreground text-center py-6">Ziadne udalosti</p>
         ) : (
           events.map((ev) => {
             const isWorkout = WORKOUT_KW.some((kw) => ev.summary.toLowerCase().includes(kw))
@@ -69,13 +72,13 @@ export default function CalendarView() {
                 className={`flex items-center gap-3 px-3 py-2 rounded-xl border text-sm
                   ${isWorkout
                     ? 'bg-orange-500/10 border-orange-500/20'
-                    : 'bg-white/[0.03] border-white/[0.06]'}`}
+                    : 'dark:bg-white/[0.03] dark:border-white/[0.07] bg-gray-50 border-gray-100'}`}
               >
-                <span className={`text-[11px] font-mono shrink-0 ${isWorkout ? 'text-orange-400' : 'text-muted-foreground'}`}>
+                <span className={`text-[11px] font-mono shrink-0 ${isWorkout ? 'text-orange-500' : 'text-muted-foreground'}`}>
                   {ev.start}
                 </span>
-                <span className="flex-1 truncate">{ev.summary}</span>
-                {isWorkout && <Dumbbell size={12} className="text-orange-400 shrink-0" />}
+                <span className="flex-1 truncate text-sm">{ev.summary}</span>
+                {isWorkout && <Dumbbell size={12} className="text-orange-500 shrink-0" />}
               </div>
             )
           })

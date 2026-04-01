@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Send, Sparkles, Loader2 } from 'lucide-react'
+import Image from 'next/image'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -10,17 +11,17 @@ interface Message {
 }
 
 const SUGGESTIONS = [
-  'Čo mám dnes v kalendári?',
-  'Aké sú moje top priority?',
-  'Napíš LinkedIn post o marketingu',
-  'Pridaj tréning v piatok o 18:00',
+  'Co mam dnes v kalendari?',
+  'Ake su moje top priority?',
+  'Napís LinkedIn post o marketingu',
+  'Pridaj trening v piatok o 18:00',
 ]
 
 export default function SovaChat() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: 'Ahoj, Natka! 💜 Som tu pre teba. Čo ťa dnes čaká alebo s čím ti môžem pomôcť?',
+      content: 'Ahoj, Natka! Som tu pre teba. Co ta dnes caka alebo s cím ti môzem pomôct?',
       timestamp: new Date().toISOString(),
     },
   ])
@@ -51,12 +52,20 @@ export default function SovaChat() {
       const data = await res.json()
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: data.reply ?? 'Niečo sa pokazilo, skús znova.', timestamp: new Date().toISOString() },
+        {
+          role: 'assistant',
+          content: data.reply ?? 'Nieco sa pokazilo, skus znova.',
+          timestamp: new Date().toISOString(),
+        },
       ])
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Prepáč, momentálne mám výpadok. Skús to znova o chvíľu.', timestamp: new Date().toISOString() },
+        {
+          role: 'assistant',
+          content: 'Prepac, momentalne mam vypadok. Skus to znova o chvilku.',
+          timestamp: new Date().toISOString(),
+        },
       ])
     } finally {
       setLoading(false)
@@ -71,15 +80,23 @@ export default function SovaChat() {
   }
 
   return (
-    <div className="flex flex-col h-full sova-border rounded-2xl bg-[#0D0920] overflow-hidden">
+    <div className="flex flex-col h-full sova-border rounded-2xl overflow-hidden dark:bg-[#0a1050] bg-white">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.06]">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center sova-glow">
-          <Sparkles size={14} className="text-white" />
+      <div className="flex items-center gap-3 px-4 py-3 border-b dark:border-white/[0.07] border-gray-100"
+        style={{ background: 'linear-gradient(135deg, rgba(8,47,93,0.6) 0%, rgba(11,17,78,0.4) 100%)' }}
+      >
+        <div
+          className="w-9 h-9 rounded-full overflow-hidden shrink-0"
+          style={{ boxShadow: '0 0 20px rgba(255,127,0,0.35)' }}
+        >
+          <Image src="/robutka.png" alt="Sona" width={36} height={36} className="w-full h-full object-cover" />
         </div>
         <div>
-          <p className="font-semibold text-sm">Soňa</p>
-          <p className="text-[10px] text-muted-foreground">AI asistentka • vždy k dispozícii</p>
+          <p className="font-semibold text-sm text-white">Sona</p>
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+            <p className="text-[10px] text-white/60">AI asistentka · vzdy k dispozicii</p>
+          </div>
         </div>
       </div>
 
@@ -88,8 +105,11 @@ export default function SovaChat() {
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {msg.role === 'assistant' && (
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mr-2 mt-0.5 shrink-0">
-                <Sparkles size={10} className="text-white" />
+              <div
+                className="w-6 h-6 rounded-full overflow-hidden mr-2 mt-0.5 shrink-0"
+                style={{ boxShadow: '0 0 10px rgba(255,127,0,0.3)' }}
+              >
+                <Image src="/robutka.png" alt="Sona" width={24} height={24} className="w-full h-full object-cover" />
               </div>
             )}
             <div
@@ -103,11 +123,11 @@ export default function SovaChat() {
 
         {loading && (
           <div className="flex justify-start">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mr-2 mt-0.5">
-              <Sparkles size={10} className="text-white" />
+            <div className="w-6 h-6 rounded-full overflow-hidden mr-2 mt-0.5 shrink-0">
+              <Image src="/robutka.png" alt="Sona" width={24} height={24} className="w-full h-full object-cover" />
             </div>
             <div className="chat-message-sova px-4 py-3 rounded-2xl rounded-bl-md">
-              <Loader2 size={16} className="animate-spin text-purple-400" />
+              <Loader2 size={16} className="animate-spin text-orange-500" />
             </div>
           </div>
         )}
@@ -121,7 +141,9 @@ export default function SovaChat() {
             <button
               key={s}
               onClick={() => send(s)}
-              className="shrink-0 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs text-purple-300 hover:bg-purple-500/20 transition-colors"
+              className="shrink-0 px-3 py-1.5 rounded-full border text-xs transition-colors
+                dark:bg-orange-500/10 dark:border-orange-500/20 dark:text-orange-300 dark:hover:bg-orange-500/20
+                bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100"
             >
               {s}
             </button>
@@ -131,13 +153,16 @@ export default function SovaChat() {
 
       {/* Input */}
       <div className="px-4 pb-4">
-        <div className="flex items-end gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 focus-within:border-purple-500/40 transition-colors">
+        <div className="flex items-end gap-2 rounded-2xl px-4 py-3 border transition-colors
+          dark:bg-white/5 dark:border-white/10 dark:focus-within:border-orange-500/40
+          bg-gray-50 border-gray-200 focus-within:border-orange-400"
+        >
           <textarea
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKey}
-            placeholder="Napíš Soňe..."
+            placeholder="Napís Sone..."
             rows={1}
             className="flex-1 bg-transparent resize-none text-sm outline-none placeholder:text-muted-foreground max-h-32 leading-relaxed"
             style={{ height: 'auto' }}
@@ -150,7 +175,8 @@ export default function SovaChat() {
           <button
             onClick={() => send()}
             disabled={!input.trim() || loading}
-            className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center disabled:opacity-40 hover:opacity-90 transition-opacity shrink-0"
+            className="w-8 h-8 rounded-xl flex items-center justify-center disabled:opacity-40 hover:opacity-90 transition-opacity shrink-0"
+            style={{ background: 'linear-gradient(135deg, #FF7F00, #e06000)' }}
           >
             <Send size={14} className="text-white" />
           </button>

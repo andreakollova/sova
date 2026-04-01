@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Lock, Send, Clock, CheckCircle, Eye, EyeOff, AlertTriangle, Heart } from 'lucide-react'
+import { Lock, Send, Clock, CheckCircle, Heart } from 'lucide-react'
 
 interface AdminInstruction {
   id: string
@@ -24,7 +24,6 @@ export default function AdminPage() {
   const [tab, setTab] = useState<'pending' | 'delivered'>('pending')
 
   function login() {
-    // Simple client-side check (real protection is server-side)
     fetch('/api/admin/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -37,7 +36,7 @@ export default function AdminPage() {
           sessionStorage.setItem('sova_admin', password)
           loadData()
         } else {
-          setError('Nesprávne heslo')
+          setError('Nespravne heslo')
         }
       })
   }
@@ -81,10 +80,10 @@ export default function AdminPage() {
 
   if (!authed) {
     return (
-      <div className="min-h-screen bg-[#0A0614] flex items-center justify-center">
-        <div className="w-full max-w-sm p-6 sova-border rounded-2xl bg-[#0D0920] space-y-4">
+      <div className="min-h-screen dark:bg-[#0b114e] bg-gray-50 flex items-center justify-center">
+        <div className="w-full max-w-sm p-6 sova-border rounded-2xl dark:bg-[#0a1050] bg-white space-y-4 shadow-lg">
           <div className="flex items-center gap-2 mb-4">
-            <Lock size={18} className="text-purple-400" />
+            <Lock size={18} className="text-orange-500" />
             <h1 className="font-bold">Admin Panel</h1>
           </div>
           <input
@@ -97,8 +96,8 @@ export default function AdminPage() {
             autoFocus
           />
           {error && <p className="text-xs text-red-400">{error}</p>}
-          <button onClick={login} className="btn-primary w-full">
-            Vstúpiť
+          <button onClick={login} className="btn-primary w-full py-2.5">
+            Vstupid
           </button>
         </div>
       </div>
@@ -106,28 +105,28 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0614] p-6">
+    <div className="min-h-screen dark:bg-[#0b114e] bg-gray-50 p-6">
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold gradient-text">Admin Panel</h1>
-            <p className="text-xs text-muted-foreground mt-1">Inštrukcie pre Soňu – kamoška ich nevidí</p>
+            <p className="text-xs text-muted-foreground mt-1">Instrukcie pre Sonu – kamoska ich nevidi</p>
           </div>
           <button
             onClick={() => { sessionStorage.removeItem('sova_admin'); setAuthed(false) }}
-            className="text-xs text-muted-foreground hover:text-foreground"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
-            Odhlásiť
+            Odhlasit
           </button>
         </div>
 
         {/* New instruction */}
-        <div className="sova-border rounded-2xl bg-[#0D0920] p-4 space-y-3">
-          <p className="text-sm font-medium">Nová inštrukcia pre Soňu</p>
+        <div className="sova-border rounded-2xl dark:bg-[#0a1050] bg-white p-4 space-y-3 shadow-sm">
+          <p className="text-sm font-semibold">Nova instrukcia pre Sonu</p>
           <textarea
             value={newInstruction}
             onChange={(e) => setNewInstruction(e.target.value)}
-            placeholder="napr. dnes má zavolať Zuzke, mala ťažký deň buď extra milá..."
+            placeholder="napr. dnes ma zavolat Zuzke, mala tazky den bud extra mila..."
             className="input w-full h-20 resize-none"
           />
           <div className="flex items-center gap-2">
@@ -137,10 +136,10 @@ export default function AdminPage() {
               className="btn-primary flex items-center gap-2 text-sm"
             >
               <Send size={14} />
-              {sending ? 'Posielam...' : 'Odoslať Soňe'}
+              {sending ? 'Posielam...' : 'Odoslat Sone'}
             </button>
             <p className="text-xs text-muted-foreground">
-              Soňa to zakomponuje do ďalšej správy ako svoju vlastnú myšlienku
+              Sona to zakomponuje do dalsej spravy ako svoju vlastnu myslienko
             </p>
           </div>
         </div>
@@ -151,10 +150,13 @@ export default function AdminPage() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-3 py-1.5 rounded-lg text-sm transition-colors
-                ${tab === t ? 'bg-purple-500/20 text-purple-300' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                ${tab === t
+                  ? 'text-white'
+                  : 'text-muted-foreground dark:hover:text-white hover:text-gray-700'}`}
+              style={tab === t ? { background: 'linear-gradient(135deg, #FF7F00, #e06000)' } : {}}
             >
-              {t === 'pending' ? `Čakajúce (${pending.length})` : `Doručené (${delivered.length})`}
+              {t === 'pending' ? `Cakajuce (${pending.length})` : `Dorucene (${delivered.length})`}
             </button>
           ))}
         </div>
@@ -164,7 +166,7 @@ export default function AdminPage() {
           {(tab === 'pending' ? pending : delivered).map((instr) => (
             <div
               key={instr.id}
-              className="sova-border rounded-xl p-4 bg-[#0D0920] space-y-2"
+              className="sova-border rounded-xl p-4 dark:bg-[#0a1050] bg-white space-y-2 shadow-sm"
             >
               <div className="flex items-start justify-between gap-2">
                 <p className="text-sm">{instr.text}</p>
@@ -175,7 +177,7 @@ export default function AdminPage() {
                     </span>
                   )}
                   {instr.emotionalTone && (
-                    <Heart size={14} className="text-pink-400 mt-0.5" />
+                    <Heart size={14} className="text-orange-400 mt-0.5" />
                   )}
                 </div>
               </div>
@@ -187,7 +189,7 @@ export default function AdminPage() {
                 {instr.deliveredAt && (
                   <span className="flex items-center gap-1 text-green-400">
                     <CheckCircle size={10} />
-                    Doručené v: {instr.deliveredIn}
+                    Dorucene v: {instr.deliveredIn}
                   </span>
                 )}
               </div>
@@ -196,7 +198,7 @@ export default function AdminPage() {
 
           {(tab === 'pending' ? pending : delivered).length === 0 && (
             <p className="text-xs text-muted-foreground text-center py-8">
-              {tab === 'pending' ? 'Žiadne čakajúce inštrukcie' : 'Žiadne doručené inštrukcie'}
+              {tab === 'pending' ? 'Ziadne cakajuce instrukcie' : 'Ziadne dorucene instrukcie'}
             </p>
           )}
         </div>

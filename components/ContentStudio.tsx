@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Feather, Lightbulb, RefreshCw, Copy, Check, BookOpen, Linkedin } from 'lucide-react'
+import { Feather, RefreshCw, Copy, Check, BookOpen, Linkedin } from 'lucide-react'
 
 interface Content {
   id: string
@@ -23,7 +23,6 @@ export default function ContentStudio() {
 
   useEffect(() => {
     fetch('/api/linkedin-research').then((r) => r.json()).then((d) => setResearch(Array.isArray(d) ? d : []))
-    // Content is saved by the chat, fetch from KV via a simple endpoint
     fetchContent()
   }, [])
 
@@ -57,17 +56,20 @@ export default function ContentStudio() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[600px]">
       {/* List */}
-      <div className="sova-border rounded-2xl bg-[#0D0920] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+      <div className="sova-border rounded-2xl dark:bg-[#0a1050] bg-white overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-4 py-3 border-b dark:border-white/[0.07] border-gray-100">
           <div className="flex gap-1">
             {(['articles', 'research'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setActiveTab(t)}
-                className={`px-2.5 py-1 rounded-lg text-xs transition-colors
-                  ${activeTab === t ? 'bg-purple-500/20 text-purple-300' : 'text-muted-foreground hover:text-foreground'}`}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors
+                  ${activeTab === t
+                    ? 'text-white'
+                    : 'text-muted-foreground dark:hover:text-white hover:text-gray-700'}`}
+                style={activeTab === t ? { background: 'linear-gradient(135deg, #FF7F00, #e06000)' } : {}}
               >
-                {t === 'articles' ? 'Články' : 'Research'}
+                {t === 'articles' ? 'Clanky' : 'Research'}
               </button>
             ))}
           </div>
@@ -75,8 +77,8 @@ export default function ContentStudio() {
             <button
               onClick={generateResearch}
               disabled={generating}
-              className="text-muted-foreground hover:text-purple-300 transition-colors"
-              title="Generovať nový research"
+              className="text-muted-foreground hover:text-orange-500 transition-colors"
+              title="Generovat novy research"
             >
               <RefreshCw size={14} className={generating ? 'animate-spin' : ''} />
             </button>
@@ -89,8 +91,8 @@ export default function ContentStudio() {
               <Feather size={24} className="text-muted-foreground/50" />
               <p className="text-xs text-muted-foreground">
                 {activeTab === 'articles'
-                  ? 'Požiadaj Soňu v chate o napísanie článku'
-                  : 'Klikni na obnoviť pre nový LinkedIn research'}
+                  ? 'Poziadaj Sonu v chate o napisanie clanku'
+                  : 'Klikni na obnovit pre novy LinkedIn research'}
               </p>
             </div>
           ) : (
@@ -98,10 +100,11 @@ export default function ContentStudio() {
               <button
                 key={item.id}
                 onClick={() => setSelected(item)}
-                className={`w-full text-left px-3 py-2.5 rounded-xl border transition-colors
+                className={`w-full text-left px-3 py-2.5 rounded-xl border transition-all
                   ${selected?.id === item.id
-                    ? 'bg-purple-500/15 border-purple-500/30'
-                    : 'bg-white/[0.03] border-white/[0.06] hover:border-white/10'}`}
+                    ? 'border-orange-500/30'
+                    : 'dark:bg-white/[0.03] dark:border-white/[0.07] dark:hover:border-white/10 bg-gray-50 border-gray-100 hover:border-gray-200'}`}
+                style={selected?.id === item.id ? { background: 'rgba(255,127,0,0.08)' } : {}}
               >
                 <p className="text-xs font-medium truncate">{item.title}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -114,32 +117,32 @@ export default function ContentStudio() {
       </div>
 
       {/* Detail */}
-      <div className="lg:col-span-2 sova-border rounded-2xl bg-[#0D0920] overflow-hidden flex flex-col">
+      <div className="lg:col-span-2 sova-border rounded-2xl dark:bg-[#0a1050] bg-white overflow-hidden flex flex-col">
         {selected ? (
           <>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between px-4 py-3 border-b dark:border-white/[0.07] border-gray-100">
               <p className="text-sm font-medium truncate">{selected.title}</p>
               <button
                 onClick={() => copy(selected.linkedinVersion ?? selected.content)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg dark:bg-white/5 dark:hover:bg-white/10 bg-gray-100 hover:bg-gray-200 text-xs transition-colors"
               >
                 {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-                {copied ? 'Skopírované' : 'Kopírovať'}
+                {copied ? 'Skopirovane' : 'Kopirovat'}
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
-              <div className="prose prose-sm prose-invert max-w-none">
-                <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans text-foreground/90">
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans dark:text-white/90 text-gray-800">
                   {selected.content}
                 </pre>
                 {selected.linkedinVersion && (
                   <>
-                    <div className="my-4 border-t border-white/10" />
+                    <div className="my-4 border-t dark:border-white/10 border-gray-200" />
                     <div className="flex items-center gap-2 mb-2">
-                      <Linkedin size={14} className="text-blue-400" />
-                      <p className="text-xs font-medium text-blue-400">LinkedIn verzia</p>
+                      <Linkedin size={14} className="text-blue-500" />
+                      <p className="text-xs font-medium text-blue-500">LinkedIn verzia</p>
                     </div>
-                    <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans text-foreground/90">
+                    <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans dark:text-white/90 text-gray-800">
                       {selected.linkedinVersion}
                     </pre>
                   </>
@@ -152,7 +155,7 @@ export default function ContentStudio() {
             <BookOpen size={32} className="text-muted-foreground/30" />
             <p className="text-sm text-muted-foreground">Vyber obsah zo zoznamu</p>
             <p className="text-xs text-muted-foreground">
-              Alebo povedz Soňe v chate: &quot;Napíš LinkedIn post o [téma]&quot;
+              Alebo povedz Sone v chate: &quot;Napís LinkedIn post o [tema]&quot;
             </p>
           </div>
         )}
