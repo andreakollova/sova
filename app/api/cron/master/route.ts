@@ -8,6 +8,7 @@ const CRON_ENDPOINTS = [
   '/api/cron/pre-task-reminder',
   '/api/cron/weekly-meeting',
   '/api/cron/admin-listener',
+  '/api/cron/hourly',
 ]
 
 export const dynamic = 'force-dynamic'

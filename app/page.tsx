@@ -2,13 +2,24 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 export default function Home() {
+  const [isDark, setIsDark] = useState(true)
+
+  useEffect(() => {
+    const stored = localStorage.getItem('sova-theme')
+    setIsDark(stored !== 'light')
+  }, [])
+
+  const videoSrc = isDark ? '/anim-dark.mp4' : '/anim-light.mp4'
+
   return (
     <div className="relative h-screen w-full overflow-hidden flex items-center justify-center">
       {/* Video background */}
       <video
-        src="/animacia.mp4"
+        key={videoSrc}
+        src={videoSrc}
         autoPlay
         muted
         loop
