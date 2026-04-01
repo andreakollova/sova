@@ -51,7 +51,7 @@ export default function Sidebar({ active }: { active: string }) {
 
   return (
     <aside className="w-16 lg:w-56 flex flex-col h-screen shrink-0 border-r transition-colors duration-200
-      dark:bg-[#080e42] dark:border-white/[0.07]
+      dark:bg-[#141414] dark:border-white/[0.08]
       bg-white border-gray-100 shadow-sm"
     >
 

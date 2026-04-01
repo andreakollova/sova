@@ -2,187 +2,132 @@
 
 import { useState, useEffect } from 'react'
 import Sidebar from '@/components/Sidebar'
-import SovaChat from '@/components/SovaChat'
 import CalendarView from '@/components/CalendarView'
-import TaskBoard from '@/components/TaskBoard'
 import GmailAlerts from '@/components/GmailAlerts'
-import { Calendar, Plus, Loader2 } from 'lucide-react'
+import TaskBoard from '@/components/TaskBoard'
+import { Calendar, Mail, CheckSquare, Clock, Dumbbell, Zap, TrendingUp } from 'lucide-react'
 
-const SK_DAYS = ['nedela', 'pondelok', 'utorok', 'streda', 'stvrtok', 'piatok', 'sobota']
-const SK_MONTHS = [
-  'januara', 'februara', 'marca', 'aprila', 'maja', 'juna',
-  'jula', 'augusta', 'septembra', 'oktobra', 'novembra', 'decembra',
-]
-
-function getGreeting() {
-  const h = new Date().getHours()
-  if (h < 5) return 'Dobru noc'
-  if (h < 12) return 'Dobre rano'
-  if (h < 18) return 'Dobry den'
-  return 'Dobry vecer'
-}
+const SK_DAYS = ['Nedela', 'Pondelok', 'Utorok', 'Streda', 'Stvrtok', 'Piatok', 'Sobota']
+const SK_MONTHS = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
 
 function getSkDate() {
   const d = new Date()
-  const day = SK_DAYS[d.getDay()]
-  return `${day.charAt(0).toUpperCase() + day.slice(1)}, ${d.getDate()}. ${SK_MONTHS[d.getMonth()]} ${d.getFullYear()}`
+  return `${SK_DAYS[d.getDay()]}, ${d.getDate()}. ${SK_MONTHS[d.getMonth()]} ${d.getFullYear()}`
 }
 
-interface QuickEventForm {
-  title: string
-  date: string
-  time: string
-}
+// Mock stats — in future these will come from KV
+const STATS = [
+  { icon: Clock, label: 'Focus time dnes', value: '0 min', accent: 'text-orange-500', bg: 'bg-orange-500/10' },
+  { icon: Dumbbell, label: 'Treningy tento tydzen', value: '0', accent: 'text-blue-400', bg: 'bg-blue-500/10' },
+  { icon: CheckSquare, label: 'Ulohy splnene', value: '0', accent: 'text-green-400', bg: 'bg-green-500/10' },
+  { icon: Zap, label: 'Pomodoro rounds', value: '0', accent: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+]
 
 export default function DashboardPage() {
-  const [greeting, setGreeting] = useState('')
   const [skDate, setSkDate] = useState('')
-  const [quickEvent, setQuickEvent] = useState<QuickEventForm>({
-    title: '',
-    date: new Date().toISOString().split('T')[0],
-    time: '09:00',
-  })
-  const [addingEvent, setAddingEvent] = useState(false)
-  const [eventMsg, setEventMsg] = useState('')
+  const [isDark, setIsDark] = useState(true)
+  const [videoLoaded, setVideoLoaded] = useState(false)
 
   useEffect(() => {
-    setGreeting(getGreeting())
     setSkDate(getSkDate())
+    const stored = localStorage.getItem('sova-theme')
+    setIsDark(stored !== 'light')
   }, [])
 
-  async function addToCalendar() {
-    if (!quickEvent.title.trim()) return
-    setAddingEvent(true)
-    setEventMsg('')
-    try {
-      // NOTE: /api/calendar currently only supports GET.
-      // When POST is implemented, this will send the event.
-      const res = await fetch('/api/calendar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          summary: quickEvent.title,
-          date: quickEvent.date,
-          time: quickEvent.time,
-        }),
-      })
-      if (res.ok) {
-        setEventMsg('Udalost pridana!')
-        setQuickEvent({ title: '', date: new Date().toISOString().split('T')[0], time: '09:00' })
-      } else {
-        setEventMsg('Pridanie zatial nie je aktivne (API GET only)')
-      }
-    } catch {
-      setEventMsg('Pridanie zatial nie je aktivne (API GET only)')
-    } finally {
-      setAddingEvent(false)
-      setTimeout(() => setEventMsg(''), 3000)
-    }
-  }
+  const videoSrc = isDark ? '/anim-dark.mp4' : '/anim-light.mp4'
 
   return (
-    <div className="flex h-screen dark:bg-[#0b114e] bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar active="dashboard" />
 
       <main className="flex-1 overflow-auto">
-        <div className="p-5 lg:p-7 space-y-6 max-w-7xl mx-auto">
+        <div className="max-w-6xl mx-auto px-5 lg:px-8 py-6 space-y-8">
 
-          {/* ── Header ── */}
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-bold gradient-text">
-                {greeting}, Natka!
-              </h1>
-              <p className="text-muted-foreground text-sm mt-1">{skDate}</p>
+          {/* ── Hero section ── */}
+          <div className="flex flex-col items-center text-center pt-4 pb-2">
+            {/* Animation */}
+            <div className="relative w-48 h-48 lg:w-56 lg:h-56 mb-6">
+              <video
+                key={videoSrc}
+                src={videoSrc}
+                autoPlay
+                muted
+                loop
+                playsInline
+                onLoadedData={() => setVideoLoaded(true)}
+                className={`w-full h-full object-cover rounded-3xl transition-opacity duration-500 ${videoLoaded ? 'opacity-100' : 'opacity-0'}`}
+              />
+              {!videoLoaded && (
+                <div className="absolute inset-0 rounded-3xl bg-muted animate-pulse" />
+              )}
             </div>
-            <div
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full"
-              style={{ background: 'rgba(255,127,0,0.1)', border: '1px solid rgba(255,127,0,0.2)' }}
-            >
-              <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
-              <span className="text-xs text-orange-500 dark:text-orange-400 font-medium">Sona aktivna</span>
+
+            {/* Greeting */}
+            <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-1">
+              Ahoj, <span style={{ color: '#FF7F00' }}>Fondula!</span>
+            </h1>
+            <p className="text-muted-foreground text-sm">{skDate}</p>
+
+            {/* Status pill */}
+            <div className="mt-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/60 border border-border">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              <span className="text-xs text-muted-foreground font-medium">Sona je aktivna a sleduje tvoj den</span>
+            </div>
+          </div>
+
+          {/* ── Stats ── */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp size={15} className="text-muted-foreground" />
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Tvoje statistiky</h2>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {STATS.map(({ icon: Icon, label, value, accent, bg }) => (
+                <div
+                  key={label}
+                  className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-3 hover:border-orange-500/30 transition-colors"
+                >
+                  <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>
+                    <Icon size={15} className={accent} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">{value}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* ── Main grid ── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-            {/* Chat – 2 cols */}
-            <div className="lg:col-span-2 h-[560px]">
-              <SovaChat />
+            {/* Calendar – 2 cols */}
+            <div className="lg:col-span-2">
+              <div className="flex items-center gap-2 mb-3">
+                <Calendar size={15} className="text-muted-foreground" />
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Dnesny kalendar</h2>
+              </div>
+              <CalendarView />
             </div>
 
-            {/* Right column */}
-            <div className="space-y-4">
+            {/* Emails */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Mail size={15} className="text-muted-foreground" />
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Dolezite emaily</h2>
+              </div>
               <GmailAlerts />
-              <CalendarView />
             </div>
           </div>
 
-          {/* ── Second row ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-            {/* Tasks – 2 cols */}
-            <div className="lg:col-span-2">
-              <TaskBoard />
+          {/* ── Tasks ── */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <CheckSquare size={15} className="text-muted-foreground" />
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Ulohy</h2>
             </div>
-
-            {/* Quick add to calendar */}
-            <div className="sova-border rounded-2xl overflow-hidden dark:bg-[#0a1050] bg-white">
-              <div className="flex items-center gap-2 px-4 py-3 border-b dark:border-white/[0.07] border-gray-100">
-                <Calendar size={15} className="text-orange-500" />
-                <span className="text-sm font-semibold">Pridat do kalendara</span>
-              </div>
-              <div className="p-4 space-y-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground">Nazov udalosti</label>
-                  <input
-                    value={quickEvent.title}
-                    onChange={(e) => setQuickEvent((q) => ({ ...q, title: e.target.value }))}
-                    onKeyDown={(e) => e.key === 'Enter' && addToCalendar()}
-                    placeholder="napr. Stretnutie s klientom"
-                    className="input"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs text-muted-foreground">Datum</label>
-                    <input
-                      type="date"
-                      value={quickEvent.date}
-                      onChange={(e) => setQuickEvent((q) => ({ ...q, date: e.target.value }))}
-                      className="input"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs text-muted-foreground">Cas</label>
-                    <input
-                      type="time"
-                      value={quickEvent.time}
-                      onChange={(e) => setQuickEvent((q) => ({ ...q, time: e.target.value }))}
-                      className="input"
-                    />
-                  </div>
-                </div>
-                <button
-                  onClick={addToCalendar}
-                  disabled={addingEvent || !quickEvent.title.trim()}
-                  className="btn-primary w-full flex items-center justify-center gap-2 py-2.5"
-                >
-                  {addingEvent ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Plus size={14} />
-                  )}
-                  Pridat do kalendara
-                </button>
-                {eventMsg && (
-                  <p className={`text-xs text-center ${eventMsg.includes('nie') ? 'text-muted-foreground' : 'text-green-500'}`}>
-                    {eventMsg}
-                  </p>
-                )}
-              </div>
-            </div>
+            <TaskBoard />
           </div>
 
         </div>
