@@ -27,9 +27,12 @@ const MEDIA = {
 function detectMedia(text) {
   const t = text.toLowerCase()
   if (/motivaci|motivuj|motivaciu|motivacia|povzbuď|povzbudenie/.test(t)) return MEDIA.motivation
-  if (/oslav|slav(im|me|me)|gratuluj|yay|hurra|podarilo|splnila|vyhral|vyhral/.test(t)) return MEDIA.celebration
+  if (/oslav|slav(im|me|me)|gratuluj|yay|hurra|podarilo|splnila|vyhral/.test(t)) return MEDIA.celebration
   if (/lask[au]|objat|milujem|chcem lasku|chcem objatie/.test(t)) return MEDIA.laska
   if (/stastn[aá]|som stast|cítim sa dobre|super nalada|dobrá nalada/.test(t)) return MEDIA.happy
+  if (/hokej|zapas|zápas|idem na hokej|hram hokej/.test(t)) return MEDIA.hockey
+  if (/idem beh|idem behať|idem bezat|idem na beh|idem bezat|dnes behám|dnes bezim/.test(t)) return MEDIA.running
+  if (/idem na fitko|idem do fitka|idem cvicit|idem na trening|idem na tréning|fitness|silovy trening/.test(t)) return MEDIA.fitness
   return null
 }
 const CRON_SECRET = process.env.CRON_SECRET
