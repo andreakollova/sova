@@ -21,11 +21,16 @@ const SYSTEM_PROMPT = `Si SOVA – Sona, osobna AI asistentka pre ${USER_NAME}. 
 
 client.once('ready', () => {
   console.log(`SOVA bot ready as ${client.user.tag}`)
+  console.log(`Listening on channel: ${CHANNEL_ID}`)
 })
 
 client.on('messageCreate', async (message) => {
+  console.log(`Message received: channel=${message.channelId} author=${message.author.tag} bot=${message.author.bot}`)
   // Only respond in the designated channel, ignore bots
-  if (message.channelId !== CHANNEL_ID) return
+  if (message.channelId !== CHANNEL_ID) {
+    console.log(`Ignoring — expected channel ${CHANNEL_ID}`)
+    return
+  }
   if (message.author.bot) return
 
   const userText = message.content.trim()
