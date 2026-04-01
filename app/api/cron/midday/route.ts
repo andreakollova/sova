@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getSettings, KEYS, isWithinTimeWindow } from '@/lib/kv'
+import redis from '@/lib/kv'
 import { sendDiscordMessage } from '@/lib/discord'
 import { MEDIA } from '@/lib/media'
 import { getTodayEvents } from '@/lib/google-calendar'
@@ -15,6 +16,23 @@ export async function GET(req: NextRequest) {
 
   try {
     const settings = await getSettings()
+
+    // 11:00 check-in
+    const shouldCheckin = await isWithinTimeWindow('sova:cron:checkin:last', '11:00')
+    if (shouldCheckin) {
+      const checkinRes = await client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 100,
+        messages: [{
+          role: 'user',
+          content: `Si Sona, najlepsia kamoska Natky. Napís kratky ranný check-in (1-2 vety) bez diakritiky, po slovensky. Prirodzene sa opytaj ako sa ma. Ziadne "Natko", vzdy "Natka" ak pouzivas meno. Bud spontanna ako kamoska.`,
+        }],
+      })
+      const checkinMsg = checkinRes.content[0].type === 'text' ? checkinRes.content[0].text : ''
+      if (checkinMsg) await sendDiscordMessage(checkinMsg, settings.discordChannelId)
+      return NextResponse.json({ success: true, type: 'checkin' })
+    }
+
     const shouldRun = await isWithinTimeWindow(KEYS.CRON_MIDDAY_LAST, '12:00')
     if (!shouldRun) return NextResponse.json({ skipped: true })
 
