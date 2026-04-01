@@ -1,9 +1,17 @@
 import { Redis } from '@upstash/redis'
 
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL!,
-  token: process.env.KV_REST_API_TOKEN!,
-})
+const hasKV = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+
+const redis = hasKV
+  ? new Redis({
+      url: process.env.KV_REST_API_URL!,
+      token: process.env.KV_REST_API_TOKEN!,
+    })
+  : {
+      get: async () => null,
+      set: async () => 'OK',
+      del: async () => 1,
+    } as unknown as Redis
 
 export default redis
 

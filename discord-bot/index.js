@@ -11,6 +11,27 @@ const client = new Client({
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 const SOVA_URL = process.env.SOVA_URL ?? 'https://sova-phi.vercel.app'
+
+const MEDIA = {
+  motivation: `${SOVA_URL}/media/motivation.png`,
+  celebration: `${SOVA_URL}/media/celebration.mp4`,
+  laska: `${SOVA_URL}/media/laska.mp4`,
+  happy: `${SOVA_URL}/media/happy.mp4`,
+  running: `${SOVA_URL}/media/beh.mp4`,
+  fitness: `${SOVA_URL}/media/fitness.mp4`,
+  hockey: `${SOVA_URL}/media/hockey.png`,
+  lunch: `${SOVA_URL}/media/jedlo.mp4`,
+  focus: `${SOVA_URL}/media/focus.png`,
+}
+
+function detectMedia(text) {
+  const t = text.toLowerCase()
+  if (/motivaci|motivuj|motivaciu|motivacia|povzbuď|povzbudenie/.test(t)) return MEDIA.motivation
+  if (/oslav|slav(im|me|me)|gratuluj|yay|hurra|podarilo|splnila|vyhral|vyhral/.test(t)) return MEDIA.celebration
+  if (/lask[au]|objat|milujem|chcem lasku|chcem objatie/.test(t)) return MEDIA.laska
+  if (/stastn[aá]|som stast|cítim sa dobre|super nalada|dobrá nalada/.test(t)) return MEDIA.happy
+  return null
+}
 const CRON_SECRET = process.env.CRON_SECRET
 const CHANNEL_ID = process.env.DISCORD_CHANNEL_ID
 const USER_NAME = process.env.USER_NAME ?? 'Natka'
@@ -233,6 +254,9 @@ client.on('messageCreate', async (message) => {
     if (history.length > 20) history.splice(0, history.length - 20)
 
     await message.channel.send(reply)
+
+    const mediaUrl = detectMedia(userText)
+    if (mediaUrl) await message.channel.send(mediaUrl)
   } catch (err) {
     console.error('Anthropic error:', err)
   }
