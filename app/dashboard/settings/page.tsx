@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Sidebar from '@/components/Sidebar'
-import { Bell, Mail, User, Clock, Plus, X, Save, Dumbbell, Hash, Globe } from 'lucide-react'
+import { Bell, Mail, User, Clock, Plus, X, Save, Dumbbell, Hash } from 'lucide-react'
 
 interface UserSettings {
   morningTime: string
@@ -27,16 +27,6 @@ const WORKOUT_OPTIONS = [
   { id: 'plavanie', label: 'Plavanie' },
   { id: 'joga', label: 'Joga' },
   { id: 'inne', label: 'Ine' },
-]
-
-const DAY_OPTIONS = [
-  { id: 'po', label: 'Po' },
-  { id: 'ut', label: 'Ut' },
-  { id: 'st', label: 'St' },
-  { id: 'st2', label: 'St' },
-  { id: 'pi', label: 'Pi' },
-  { id: 'so', label: 'So' },
-  { id: 'ne', label: 'Ne' },
 ]
 
 const DAY_LABELS = ['Pondelok', 'Utorok', 'Streda', 'Stvrtok', 'Piatok', 'Sobota', 'Nedela']
@@ -118,20 +108,22 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex h-screen dark:bg-[#0b114e] bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar active="settings" />
 
-      <main className="flex-1 overflow-auto p-5 lg:p-7">
-        <div className="max-w-2xl mx-auto space-y-5">
+      <main className="flex-1 overflow-auto px-8 py-8">
+        <div className="max-w-[680px] mx-auto space-y-5">
 
           {/* Header */}
           <div>
-            <h1 className="text-2xl font-bold gradient-text">Nastavenia</h1>
-            <p className="text-muted-foreground text-sm mt-1">Prispôsob si Sonu podla seba</p>
+            <h1 className="text-[22px] font-normal text-foreground">Nastavenia</h1>
+            <p className="text-[13px] font-light text-muted-foreground mt-1">
+              Prispôsob si Sonu podla seba
+            </p>
           </div>
 
           {/* ── Profil ── */}
-          <Section title="Profil" icon={<User size={15} className="text-orange-500" />}>
+          <Section title="Profil" icon={<User size={14} strokeWidth={1.5} className="text-muted-foreground" />}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Meno">
                 <input
@@ -154,7 +146,7 @@ export default function SettingsPage() {
           </Section>
 
           {/* ── Moj rezim ── */}
-          <Section title="Moj rezim" icon={<Clock size={15} className="text-orange-500" />}>
+          <Section title="Moj rezim" icon={<Clock size={14} strokeWidth={1.5} className="text-muted-foreground" />}>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Field label="Rano vstajem">
                 <input
@@ -188,22 +180,22 @@ export default function SettingsPage() {
           </Section>
 
           {/* ── Cvicenie ── */}
-          <Section title="Cvicenie" icon={<Dumbbell size={15} className="text-orange-500" />}>
+          <Section title="Cvicenie" icon={<Dumbbell size={14} strokeWidth={1.5} className="text-muted-foreground" />}>
             <Field label="Typy cvicenia">
               <div className="flex flex-wrap gap-2 mt-1">
                 {WORKOUT_OPTIONS.map(({ id, label }) => {
-                  const active = settings.workoutTypes.includes(id)
+                  const isActive = settings.workoutTypes.includes(id)
                   return (
                     <button
                       key={id}
                       type="button"
                       onClick={() => toggleWorkoutType(id)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
-                        active
-                          ? 'text-white border-orange-500/0'
-                          : 'dark:bg-white/5 dark:border-white/10 dark:text-muted-foreground bg-gray-100 border-gray-200 text-gray-600 hover:border-orange-300'
-                      }`}
-                      style={active ? { background: 'linear-gradient(135deg, #FF7F00, #e06000)' } : {}}
+                      className="px-3 py-1.5 rounded-lg text-[12px] font-normal border transition-all"
+                      style={
+                        isActive
+                          ? { background: '#c96a4e', color: '#ffffff', borderColor: 'transparent' }
+                          : { background: 'transparent', borderColor: 'rgba(255,255,255,0.08)', color: '#aaaaaa' }
+                      }
                     >
                       {label}
                     </button>
@@ -215,18 +207,18 @@ export default function SettingsPage() {
             <Field label="Typicke dni cvicenia">
               <div className="flex flex-wrap gap-2 mt-1">
                 {DAY_IDS.map((id, idx) => {
-                  const active = settings.workoutDays.includes(id)
+                  const isActive = settings.workoutDays.includes(id)
                   return (
                     <button
                       key={id}
                       type="button"
                       onClick={() => toggleWorkoutDay(id)}
-                      className={`w-10 h-10 rounded-xl text-xs font-medium border transition-all ${
-                        active
-                          ? 'text-white border-orange-500/0'
-                          : 'dark:bg-white/5 dark:border-white/10 dark:text-muted-foreground bg-gray-100 border-gray-200 text-gray-600'
-                      }`}
-                      style={active ? { background: 'linear-gradient(135deg, #FF7F00, #e06000)' } : {}}
+                      className="w-10 h-10 rounded-lg text-[12px] font-normal border transition-all"
+                      style={
+                        isActive
+                          ? { background: '#c96a4e', color: '#ffffff', borderColor: 'transparent' }
+                          : { background: 'transparent', borderColor: 'rgba(255,255,255,0.08)', color: '#aaaaaa' }
+                      }
                     >
                       {DAY_LABELS[idx].slice(0, 2)}
                     </button>
@@ -237,22 +229,26 @@ export default function SettingsPage() {
           </Section>
 
           {/* ── Sledovane emaily ── */}
-          <Section title="Sledovane emailove adresy" icon={<Mail size={15} className="text-orange-500" />}>
-            <div className="space-y-2 mb-3">
+          <Section title="Sledovane emailove adresy" icon={<Mail size={14} strokeWidth={1.5} className="text-muted-foreground" />}>
+            <div className="space-y-1.5 mb-3">
               {settings.watchedEmails.length === 0 && (
-                <p className="text-xs text-muted-foreground">Zatial ziadne sledovane adresy</p>
+                <p className="text-[12px] font-light text-muted-foreground">Zatial ziadne sledovane adresy</p>
               )}
               {settings.watchedEmails.map((email) => (
                 <div
                   key={email}
-                  className="flex items-center justify-between px-3 py-2 rounded-xl dark:bg-white/5 dark:border-white/10 bg-gray-50 border border-gray-200"
+                  className="flex items-center justify-between px-3 py-2 rounded-lg border"
+                  style={{
+                    background: 'rgba(255,255,255,0.02)',
+                    borderColor: 'rgba(255,255,255,0.07)',
+                  }}
                 >
-                  <span className="text-sm">{email}</span>
+                  <span className="text-[13px] font-light text-foreground">{email}</span>
                   <button
                     onClick={() => removeEmail(email)}
                     className="text-muted-foreground hover:text-red-400 transition-colors"
                   >
-                    <X size={14} />
+                    <X size={13} strokeWidth={1.5} />
                   </button>
                 </div>
               ))}
@@ -269,15 +265,15 @@ export default function SettingsPage() {
                 onClick={addEmail}
                 className="btn-primary px-3 py-2 flex items-center justify-center"
               >
-                <Plus size={15} />
+                <Plus size={14} strokeWidth={1.5} />
               </button>
             </div>
           </Section>
 
           {/* ── Discord ── */}
-          <Section title="Discord kanaly" icon={<Hash size={15} className="text-orange-500" />}>
+          <Section title="Discord kanaly" icon={<Hash size={14} strokeWidth={1.5} className="text-muted-foreground" />}>
             <div className="space-y-3">
-              <Field label="Hlavny kanal (kde Sona píse tebe)">
+              <Field label="Hlavny kanal (kde Sona pise tebe)">
                 <input
                   value={settings.discordChannelId}
                   onChange={(e) => setSettings((s) => ({ ...s, discordChannelId: e.target.value }))}
@@ -302,13 +298,13 @@ export default function SettingsPage() {
                 />
               </Field>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-[11px] font-light text-muted-foreground mt-2">
               Pravy klik na kanal v Discorde → Copy Channel ID (zapni Developer Mode)
             </p>
           </Section>
 
           {/* ── Notifikacie ── */}
-          <Section title="Notifikacie" icon={<Bell size={15} className="text-orange-500" />}>
+          <Section title="Notifikacie" icon={<Bell size={14} strokeWidth={1.5} className="text-muted-foreground" />}>
             <div className="grid grid-cols-2 gap-4">
               <Field label="Rane zhrnutie">
                 <input
@@ -333,11 +329,12 @@ export default function SettingsPage() {
           <button
             onClick={save}
             disabled={saving}
-            className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-base"
+            className="btn-primary w-full flex items-center justify-center gap-2 py-3"
           >
-            <Save size={16} />
+            <Save size={14} strokeWidth={1.5} />
             {saving ? 'Ukladam...' : saved ? 'Ulozene!' : 'Ulozit nastavenia'}
           </button>
+
         </div>
       </main>
     </div>
@@ -354,10 +351,19 @@ function Section({
   children: React.ReactNode
 }) {
   return (
-    <div className="sova-border rounded-2xl p-5 dark:bg-[#0a1050]/80 bg-white space-y-4 shadow-sm">
-      <div className="flex items-center gap-2 pb-1 border-b dark:border-white/[0.07] border-gray-100">
+    <div
+      className="rounded-xl p-5 space-y-4 border"
+      style={{
+        background: 'hsl(var(--card))',
+        borderColor: 'rgba(255,255,255,0.07)',
+      }}
+    >
+      <div
+        className="flex items-center gap-2 pb-3 border-b"
+        style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+      >
         {icon}
-        <h2 className="font-semibold text-sm">{title}</h2>
+        <h2 className="text-[13px] font-normal text-foreground">{title}</h2>
       </div>
       {children}
     </div>
@@ -367,7 +373,7 @@ function Section({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-xs text-muted-foreground font-medium">{label}</label>
+      <label className="text-[11px] font-light text-muted-foreground">{label}</label>
       {children}
     </div>
   )

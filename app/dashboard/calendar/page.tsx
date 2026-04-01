@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Sidebar from '@/components/Sidebar'
 import CalendarView from '@/components/CalendarView'
-import { CalendarDays, Plus, Loader2, Info } from 'lucide-react'
+import { Plus, Loader2, Info } from 'lucide-react'
 
 interface NewEvent {
   title: string
@@ -28,8 +28,6 @@ export default function CalendarPage() {
     setLoading(true)
     setMsg('')
     try {
-      // NOTE: /api/calendar currently only supports GET.
-      // POST support is planned – form is ready for when it becomes available.
       const res = await fetch('/api/calendar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -55,39 +53,39 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="flex h-screen dark:bg-[#0b114e] bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar active="calendar" />
 
-      <main className="flex-1 overflow-auto p-5 lg:p-7">
-        <div className="max-w-5xl mx-auto space-y-6">
+      <main className="flex-1 overflow-auto px-8 py-8">
+        <div className="max-w-[900px] mx-auto space-y-6">
 
           {/* Header */}
           <div>
-            <h1 className="text-2xl font-bold gradient-text">Kalendar</h1>
-            <p className="text-muted-foreground text-sm mt-1">Prehlad udalosti a pridavanie novych</p>
+            <h1 className="text-[22px] font-normal text-foreground">Kalendar</h1>
+            <p className="text-[13px] font-light text-muted-foreground mt-1">
+              Prehlad udalosti a pridavanie novych
+            </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             {/* Calendar view – 2 cols */}
             <div className="lg:col-span-2">
+              <p className="text-[10px] font-normal uppercase tracking-[0.1em] text-[#555] dark:text-[#444] mb-3">
+                Udalosti
+              </p>
               <CalendarView />
             </div>
 
             {/* Add event form */}
             <div>
-              <div className="sova-border rounded-2xl overflow-hidden dark:bg-[#0a1050] bg-white">
-                {/* Header */}
-                <div className="flex items-center gap-2 px-4 py-3 border-b dark:border-white/[0.07] border-gray-100"
-                  style={{ background: 'linear-gradient(135deg, rgba(8,47,93,0.5), rgba(11,17,78,0.3))' }}
-                >
-                  <CalendarDays size={15} className="text-orange-500" />
-                  <span className="text-sm font-semibold">Nova udalost</span>
-                </div>
-
+              <p className="text-[10px] font-normal uppercase tracking-[0.1em] text-[#555] dark:text-[#444] mb-3">
+                Nova udalost
+              </p>
+              <div className="bg-card border border-border rounded-xl overflow-hidden">
                 <form onSubmit={submit} className="p-4 space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs text-muted-foreground font-medium">Nazov udalosti *</label>
+                    <label className="text-[11px] font-light text-muted-foreground">Nazov udalosti</label>
                     <input
                       required
                       value={form.title}
@@ -98,7 +96,7 @@ export default function CalendarPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs text-muted-foreground font-medium">Datum</label>
+                    <label className="text-[11px] font-light text-muted-foreground">Datum</label>
                     <input
                       type="date"
                       value={form.date}
@@ -109,7 +107,7 @@ export default function CalendarPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <label className="text-xs text-muted-foreground font-medium">Cas</label>
+                      <label className="text-[11px] font-light text-muted-foreground">Cas</label>
                       <input
                         type="time"
                         value={form.time}
@@ -118,7 +116,7 @@ export default function CalendarPage() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs text-muted-foreground font-medium">Trvanie (min)</label>
+                      <label className="text-[11px] font-light text-muted-foreground">Trvanie (min)</label>
                       <select
                         value={form.duration}
                         onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))}
@@ -139,30 +137,42 @@ export default function CalendarPage() {
                     disabled={loading || !form.title.trim()}
                     className="btn-primary w-full flex items-center justify-center gap-2 py-2.5"
                   >
-                    {loading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                    {loading ? <Loader2 size={14} strokeWidth={1.5} className="animate-spin" /> : <Plus size={14} strokeWidth={1.5} />}
                     Pridat do kalendara
                   </button>
 
-                  {/* Status message */}
                   {msg && (
-                    <div className={`flex items-start gap-2 p-3 rounded-xl text-xs
-                      ${msg.includes('nie je') || msg.includes('nepodporuje')
-                        ? 'dark:bg-blue-500/10 bg-blue-50 dark:text-blue-300 text-blue-600 dark:border-blue-500/20 border border-blue-200'
-                        : 'dark:bg-green-500/10 bg-green-50 text-green-600 dark:text-green-400 dark:border-green-500/20 border border-green-200'
-                      }`}
+                    <div
+                      className="flex items-start gap-2 p-3 rounded-lg text-[12px] font-light border"
+                      style={{
+                        background: msg.includes('nie je') || msg.includes('nepodporuje')
+                          ? 'rgba(96,165,250,0.08)'
+                          : 'rgba(74,222,128,0.08)',
+                        borderColor: msg.includes('nie je') || msg.includes('nepodporuje')
+                          ? 'rgba(96,165,250,0.15)'
+                          : 'rgba(74,222,128,0.15)',
+                        color: msg.includes('nie je') || msg.includes('nepodporuje')
+                          ? '#93c5fd'
+                          : '#86efac',
+                      }}
                     >
-                      <Info size={12} className="mt-0.5 shrink-0" />
+                      <Info size={12} strokeWidth={1.5} className="mt-0.5 shrink-0" />
                       {msg}
                     </div>
                   )}
                 </form>
 
-                {/* Note */}
                 <div className="px-4 pb-4">
-                  <div className="flex items-start gap-2 p-3 rounded-xl dark:bg-white/[0.02] bg-gray-50 dark:border-white/[0.05] border border-gray-100">
-                    <Info size={11} className="text-muted-foreground mt-0.5 shrink-0" />
-                    <p className="text-[10px] text-muted-foreground leading-relaxed">
-                      Udalosti mozete pridavat aj cez Sonu v chate – napisat: „pridaj tréning v piatok o 18:00"
+                  <div
+                    className="flex items-start gap-2 p-3 rounded-lg border"
+                    style={{
+                      background: 'rgba(255,255,255,0.02)',
+                      borderColor: 'rgba(255,255,255,0.05)',
+                    }}
+                  >
+                    <Info size={11} strokeWidth={1.5} className="text-muted-foreground mt-0.5 shrink-0" />
+                    <p className="text-[11px] font-light text-muted-foreground leading-relaxed">
+                      Udalosti mozete pridavat aj cez Sonu v chate – napisat: „pridaj trening v piatok o 18:00"
                     </p>
                   </div>
                 </div>

@@ -14,16 +14,22 @@ interface Task {
   createdAt: string
 }
 
-const PRIORITY_COLOR = {
-  high: 'text-red-500 border-red-500/30 bg-red-500/10',
-  medium: 'text-yellow-500 border-yellow-500/30 bg-yellow-500/10',
-  low: 'text-blue-400 border-blue-400/30 bg-blue-400/10',
+const PRIORITY_LABEL = {
+  high: 'vysoka',
+  medium: 'stredna',
+  low: 'nizka',
 }
 
-const STATUS_ICON = {
-  todo: <Circle size={16} className="text-muted-foreground" />,
-  in_progress: <Clock size={16} className="text-orange-400" />,
-  done: <CheckCircle2 size={16} className="text-green-400" />,
+const PRIORITY_COLOR: Record<string, string> = {
+  high: 'rgba(239,68,68,0.15)',
+  medium: 'rgba(234,179,8,0.12)',
+  low: 'rgba(96,165,250,0.12)',
+}
+
+const PRIORITY_TEXT: Record<string, string> = {
+  high: '#f87171',
+  medium: '#ca8a04',
+  low: '#60a5fa',
 }
 
 export default function TaskBoard({ fullView = false }: { fullView?: boolean }) {
@@ -79,22 +85,29 @@ export default function TaskBoard({ fullView = false }: { fullView?: boolean }) 
 
   const done = tasks.filter((t) => t.status === 'done').slice(0, 5)
 
+  const statusIcon = (status: Task['status']) => {
+    if (status === 'done') return <CheckCircle2 size={15} strokeWidth={1.5} className="text-green-500" />
+    if (status === 'in_progress') return <Clock size={15} strokeWidth={1.5} className="text-muted-foreground" />
+    return <Circle size={15} strokeWidth={1.5} className="text-muted-foreground" />
+  }
+
   return (
-    <div className="sova-border rounded-2xl overflow-hidden dark:bg-[#0a1050] bg-white">
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b dark:border-white/[0.07] border-gray-100">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold">Ulohy</span>
+          <span className="text-[13px] font-normal text-foreground">Ulohy</span>
           <div className="flex gap-1">
             {(['all', 'work', 'personal'] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors
-                  ${filter === f
-                    ? 'text-white'
-                    : 'text-muted-foreground dark:hover:text-white hover:text-gray-700'}`}
-                style={filter === f ? { background: 'linear-gradient(135deg, #FF7F00, #e06000)' } : {}}
+                className="px-2.5 py-1 rounded-lg text-[12px] font-normal transition-colors"
+                style={
+                  filter === f
+                    ? { background: 'rgba(255,255,255,0.08)', color: '#e8e8e8' }
+                    : { color: '#666666' }
+                }
               >
                 {f === 'all' ? 'Vsetky' : f === 'work' ? 'Praca' : 'Osobne'}
               </button>
@@ -103,18 +116,20 @@ export default function TaskBoard({ fullView = false }: { fullView?: boolean }) 
         </div>
         <button
           onClick={() => setShowAdd(!showAdd)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
-            dark:bg-orange-500/10 dark:border-orange-500/20 dark:text-orange-300 dark:hover:bg-orange-500/20
-            bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-normal transition-colors border"
+          style={{ borderColor: 'rgba(255,255,255,0.08)', color: '#aaaaaa' }}
         >
-          <Plus size={13} />
+          <Plus size={13} strokeWidth={1.5} />
           Pridat
         </button>
       </div>
 
       {/* Add task form */}
       {showAdd && (
-        <div className="px-4 py-3 border-b dark:border-white/[0.07] border-gray-100 dark:bg-white/[0.02] bg-gray-50 space-y-3">
+        <div
+          className="px-4 py-3 border-b border-border space-y-3"
+          style={{ background: 'rgba(255,255,255,0.02)' }}
+        >
           <input
             value={newTask.title}
             onChange={(e) => setNewTask((p: any) => ({ ...p, title: e.target.value }))}
@@ -149,27 +164,29 @@ export default function TaskBoard({ fullView = false }: { fullView?: boolean }) 
             />
           </div>
           <div className="flex gap-2">
-            <button onClick={addTask} className="btn-primary text-xs px-4 py-1.5">Pridat</button>
-            <button onClick={() => setShowAdd(false)} className="btn-secondary text-xs px-4 py-1.5">Zrusit</button>
+            <button onClick={addTask} className="btn-primary text-[12px] px-4 py-1.5">Pridat</button>
+            <button onClick={() => setShowAdd(false)} className="btn-secondary text-[12px] px-4 py-1.5">Zrusit</button>
           </div>
         </div>
       )}
 
       {/* Tasks list */}
-      <div className="p-3 space-y-2">
+      <div className="p-3 space-y-1.5">
         {loading ? (
           <div className="flex items-center justify-center h-16">
-            <div className="w-5 h-5 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
+            <div className="w-4 h-4 border border-border border-t-muted-foreground rounded-full animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-6">Ziadne otvorene ulohy</p>
+          <p className="text-[12px] font-light text-muted-foreground text-center py-6">Ziadne otvorene ulohy</p>
         ) : (
           (fullView ? filtered : filtered.slice(0, 5)).map((task) => (
             <div
               key={task.id}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-colors group
-                dark:bg-white/[0.03] dark:border-white/[0.07] dark:hover:border-white/10
-                bg-gray-50 border-gray-100 hover:border-gray-200"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors group"
+              style={{
+                background: 'rgba(255,255,255,0.02)',
+                borderColor: 'rgba(255,255,255,0.06)',
+              }}
             >
               <button
                 onClick={() =>
@@ -178,30 +195,41 @@ export default function TaskBoard({ fullView = false }: { fullView?: boolean }) 
                     task.status === 'todo' ? 'in_progress' : task.status === 'in_progress' ? 'done' : 'todo'
                   )
                 }
+                className="shrink-0"
               >
-                {STATUS_ICON[task.status]}
+                {statusIcon(task.status)}
               </button>
               <div className="flex-1 min-w-0">
-                <p className={`text-sm truncate ${task.status === 'done' ? 'line-through text-muted-foreground' : ''}`}>
+                <p
+                  className={`text-[13px] font-normal truncate ${
+                    task.status === 'done' ? 'line-through text-muted-foreground' : 'text-foreground'
+                  }`}
+                >
                   {task.title}
                 </p>
                 {task.deadline && (
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                  <p className="text-[11px] font-light text-muted-foreground mt-0.5">
                     {new Date(task.deadline).toLocaleDateString('sk-SK')}
                   </p>
                 )}
               </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full border ${PRIORITY_COLOR[task.priority]}`}>
-                {task.priority === 'high' ? 'vysoka' : task.priority === 'medium' ? 'stredna' : 'nizka'}
+              <span
+                className="text-[10px] font-normal px-2 py-0.5 rounded-full"
+                style={{
+                  background: PRIORITY_COLOR[task.priority],
+                  color: PRIORITY_TEXT[task.priority],
+                }}
+              >
+                {PRIORITY_LABEL[task.priority]}
               </span>
-              <span className="text-[10px] text-muted-foreground">
-                {task.category === 'work' ? '💼' : '🏠'}
+              <span className="text-[11px] text-muted-foreground font-light">
+                {task.category === 'work' ? 'praca' : 'osobne'}
               </span>
               <button
                 onClick={() => deleteTask(task.id)}
                 className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-400 transition-all"
               >
-                <Trash2 size={13} />
+                <Trash2 size={13} strokeWidth={1.5} />
               </button>
             </div>
           ))
@@ -211,11 +239,13 @@ export default function TaskBoard({ fullView = false }: { fullView?: boolean }) 
       {/* Completed */}
       {done.length > 0 && fullView && (
         <div className="px-4 pb-3">
-          <p className="text-xs text-muted-foreground mb-2">Dokoncene</p>
+          <p className="text-[10px] font-normal uppercase tracking-[0.1em] text-muted-foreground mb-2">
+            Dokoncene
+          </p>
           {done.map((task) => (
-            <div key={task.id} className="flex items-center gap-3 px-3 py-2 rounded-xl opacity-50">
-              <CheckCircle2 size={14} className="text-green-400" />
-              <p className="text-xs line-through text-muted-foreground">{task.title}</p>
+            <div key={task.id} className="flex items-center gap-3 px-3 py-1.5 rounded-lg opacity-40">
+              <CheckCircle2 size={13} strokeWidth={1.5} className="text-green-500" />
+              <p className="text-[12px] font-light line-through text-muted-foreground">{task.title}</p>
             </div>
           ))}
         </div>

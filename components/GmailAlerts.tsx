@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Mail, RefreshCw } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 
 interface Email {
   id: string
@@ -29,35 +29,36 @@ export default function GmailAlerts() {
   useEffect(() => { refresh() }, [])
 
   return (
-    <div className="sova-border rounded-2xl overflow-hidden dark:bg-[#0a1050] bg-white">
-      <div className="flex items-center justify-between px-4 py-3 border-b dark:border-white/[0.07] border-gray-100">
-        <div className="flex items-center gap-2">
-          <Mail size={15} className="text-orange-500" />
-          <span className="text-sm font-medium">Emaily</span>
-        </div>
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <span className="text-[13px] font-normal text-foreground">Emaily</span>
         <button
           onClick={refresh}
-          className="text-muted-foreground hover:text-orange-500 transition-colors"
+          className="text-muted-foreground hover:text-foreground transition-colors"
           title="Obnovit"
         >
-          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+          <RefreshCw size={13} strokeWidth={1.5} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
 
-      <div className="p-3 space-y-2 min-h-[80px]">
+      <div className="p-3 space-y-1.5 min-h-[80px]">
         {emails.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-4">
+          <p className="text-[12px] font-light text-muted-foreground text-center py-4">
             {loading ? 'Nacitavam...' : 'Ziadne nove emaily'}
           </p>
         ) : (
           emails.slice(0, 3).map((em) => (
             <div
               key={em.id}
-              className="px-3 py-2.5 rounded-xl dark:bg-white/[0.03] dark:border-white/[0.07] bg-gray-50 border border-gray-100"
+              className="px-3 py-2.5 rounded-lg border"
+              style={{
+                background: 'rgba(255,255,255,0.02)',
+                borderColor: 'rgba(255,255,255,0.06)',
+              }}
             >
-              <p className="text-xs font-semibold truncate">{em.subject}</p>
-              <p className="text-[10px] text-orange-500 truncate mt-0.5">{em.from}</p>
-              <p className="text-[10px] text-muted-foreground truncate mt-0.5 leading-relaxed">{em.snippet}</p>
+              <p className="text-[12px] font-normal truncate text-foreground">{em.subject}</p>
+              <p className="text-[11px] font-light truncate mt-0.5" style={{ color: '#c96a4e' }}>{em.from}</p>
+              <p className="text-[11px] font-light text-muted-foreground truncate mt-0.5 leading-relaxed">{em.snippet}</p>
             </div>
           ))
         )}
