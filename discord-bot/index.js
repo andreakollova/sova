@@ -128,31 +128,62 @@ async function scheduleReminder(userText, channel) {
 
     const [rHours, rMinutes] = parsed.reminderTime.split(':').map(Number)
     const now = new Date()
-    const reminderAt = new Date(now)
-    reminderAt.setHours(rHours, rMinutes, 0, 0)
+    const notifyAt = new Date(now)
+    notifyAt.setHours(rHours, rMinutes, 0, 0)
+    notifyAt.setMinutes(notifyAt.getMinutes() - (parsed.minutesBefore ?? 0))
 
-    // Subtract minutesBefore
-    const notifyAt = new Date(reminderAt.getTime() - (parsed.minutesBefore ?? 0) * 60000)
-    const delayMs = notifyAt.getTime() - now.getTime()
+    if (notifyAt.getTime() <= now.getTime()) return false
 
-    if (delayMs <= 0 || delayMs > 24 * 60 * 60 * 1000) return false
+    // Save to KV so it survives restarts
+    const reminders = await kvGet('sova:timed_reminders') ?? []
+    reminders.push({
+      id: Date.now().toString(),
+      notifyAt: notifyAt.toISOString(),
+      eventDescription: parsed.eventDescription,
+      eventTime: parsed.reminderTime,
+      minutesBefore: parsed.minutesBefore ?? 0,
+      channelId: channel.id,
+    })
+    await kvSet('sova:timed_reminders', reminders)
 
     const notifyTime = notifyAt.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Bratislava' })
-    const eventTime = reminderAt.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Bratislava' })
-
-    setTimeout(async () => {
-      await channel.send(`⏰ Pripomienka: ${parsed.eventDescription} o ${eventTime} – za ${parsed.minutesBefore ?? 0} minut!`)
-    }, delayMs)
-
-    return { notifyTime, eventTime, eventDescription: parsed.eventDescription, minutesBefore: parsed.minutesBefore ?? 0 }
+    return { notifyTime, eventTime: parsed.reminderTime, eventDescription: parsed.eventDescription, minutesBefore: parsed.minutesBefore ?? 0 }
   } catch {
     return false
+  }
+}
+
+// ── REMINDER CHECKER (every minute) ─────────────────────────────────────────
+async function checkReminders() {
+  try {
+    const reminders = await kvGet('sova:timed_reminders') ?? []
+    if (!reminders.length) return
+
+    const now = new Date()
+    const due = reminders.filter(r => new Date(r.notifyAt) <= now)
+    const remaining = reminders.filter(r => new Date(r.notifyAt) > now)
+
+    for (const r of due) {
+      try {
+        const ch = await client.channels.fetch(r.channelId)
+        if (ch) await ch.send(`⏰ Pripomienka: **${r.eventDescription}** o ${r.eventTime}!`)
+      } catch (e) {
+        console.error('Reminder send error:', e)
+      }
+    }
+
+    if (due.length > 0) {
+      await kvSet('sova:timed_reminders', remaining)
+    }
+  } catch (e) {
+    console.error('checkReminders error:', e)
   }
 }
 
 client.once('ready', () => {
   console.log(`SOVA bot ready as ${client.user.tag}`)
   console.log(`Listening on channel: ${CHANNEL_ID}`)
+  setInterval(checkReminders, 60 * 1000) // check every minute
 })
 
 client.on('messageCreate', async (message) => {
