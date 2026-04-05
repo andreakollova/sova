@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     const lastSent = await redis.get<string>(lastKey)
     const today = now.toISOString().slice(0, 10)
     if (lastSent === today) return NextResponse.json({ skipped: true, reason: 'already sent' })
-    await redis.set(lastKey, today, { ex: 60 * 60 * 2 })
+    await redis.set(lastKey, today)
 
     // Skip hours covered by other crons (11, 12, 20)
     if ([11, 12, 20].includes(hour)) return NextResponse.json({ skipped: true, reason: 'covered by other cron' })
