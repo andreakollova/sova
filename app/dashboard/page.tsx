@@ -29,8 +29,19 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setSkDate(getSkDate())
-    const stored = localStorage.getItem('sova-theme')
-    setIsDark(stored !== 'light')
+
+    const checkTheme = () => {
+      const stored = localStorage.getItem('sova-theme')
+      setIsDark(stored !== 'light')
+      setVideoLoaded(false)
+    }
+
+    checkTheme()
+
+    // Watch for theme changes from Sidebar
+    const observer = new MutationObserver(checkTheme)
+    observer.observe(document.documentElement, { attributeFilter: ['class'] })
+    return () => observer.disconnect()
   }, [])
 
   const videoSrc = isDark ? '/anim-dark.mp4' : '/anim-light.mp4'
