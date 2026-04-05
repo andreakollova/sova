@@ -63,10 +63,17 @@ async function kvSet(key, value) {
 let history = []
 
 async function loadHistory() {
-  const saved = await kvGet('sova:conversations')
-  if (Array.isArray(saved)) {
-    history = saved
-    console.log(`Loaded ${history.length} messages from history`)
+  try {
+    const saved = await kvGet('sova:conversations')
+    if (Array.isArray(saved) && saved.length > 0) {
+      // Ensure history starts with 'user' role (Claude requirement)
+      let clean = saved.filter(m => m && (m.role === 'user' || m.role === 'assistant') && m.content)
+      if (clean.length > 0 && clean[0].role !== 'user') clean = clean.slice(1)
+      history = clean
+      console.log(`Loaded ${history.length} messages from history`)
+    }
+  } catch (e) {
+    console.error('loadHistory error:', e)
   }
 }
 
@@ -307,6 +314,7 @@ client.on('messageCreate', async (message) => {
     if (mediaUrl) await message.channel.send(mediaUrl)
   } catch (err) {
     console.error('Anthropic error:', err)
+    await message.channel.send(`Prepac, nieco sa pokazilo (${err.message ?? 'unknown error'}). Skus znova 🙏`)
   }
 })
 
