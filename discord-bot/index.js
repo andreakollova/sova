@@ -59,8 +59,20 @@ async function kvSet(key, value) {
   } catch (e) { console.error('kvSet error:', e) }
 }
 
-// In-memory conversation history
-const history = []
+// Conversation history — loaded from KV, persisted after each message
+let history = []
+
+async function loadHistory() {
+  const saved = await kvGet('sova:conversations')
+  if (Array.isArray(saved)) {
+    history = saved
+    console.log(`Loaded ${history.length} messages from history`)
+  }
+}
+
+async function saveHistory() {
+  await kvSet('sova:conversations', history.slice(-40))
+}
 
 // Planning session state
 let planningSession = null
@@ -180,9 +192,10 @@ async function checkReminders() {
   }
 }
 
-client.once('ready', () => {
+client.once('ready', async () => {
   console.log(`SOVA bot ready as ${client.user.tag}`)
   console.log(`Listening on channel: ${CHANNEL_ID}`)
+  await loadHistory()
   setInterval(checkReminders, 60 * 1000) // check every minute
 })
 
@@ -271,23 +284,24 @@ client.on('messageCreate', async (message) => {
 
   // ── GENERAL CHAT ─────────────────────────────────────────────────
   history.push({ role: 'user', content: userText })
-  if (history.length > 20) history.splice(0, history.length - 20)
+  if (history.length > 40) history.splice(0, history.length - 40)
 
   try {
     const response = await anthropic.messages.create({
       model: 'claude-opus-4-6',
       max_tokens: 400,
       system: SYSTEM_PROMPT,
-      messages: history.slice(-10),
+      messages: history.slice(-20),
     })
 
     const reply = response.content[0]?.type === 'text' ? response.content[0].text : ''
     if (!reply) return
 
     history.push({ role: 'assistant', content: reply })
-    if (history.length > 20) history.splice(0, history.length - 20)
+    if (history.length > 40) history.splice(0, history.length - 40)
 
     await message.channel.send(reply)
+    await saveHistory()
 
     const mediaUrl = detectMedia(userText)
     if (mediaUrl) await message.channel.send(mediaUrl)
