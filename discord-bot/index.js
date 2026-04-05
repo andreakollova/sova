@@ -139,76 +139,48 @@ async function saveReminder(text) {
 async function scheduleReminder(userText, channel) {
   const res = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 100,
+    max_tokens: 120,
     messages: [{
       role: 'user',
-      content: `Z tejto spravy extrahuj cas pripomienky a minuty vopred. Sprava: "${userText}". Dnes je ${new Date().toLocaleString('sk-SK', { timeZone: 'Europe/Bratislava' })}. Vrat LEN JSON: {"reminderTime": "HH:MM", "minutesBefore": 30, "eventDescription": "..."} alebo {"error": "no time found"}. Nic ine.`,
+      content: `Z tejto spravy extrahuj cas pripomienky a minuty vopred. Sprava: "${userText}". Teraz je ${new Date().toLocaleString('sk-SK', { timeZone: 'Europe/Bratislava' })} (Europe/Bratislava). Vrat LEN JSON: {"reminderTime": "HH:MM", "minutesBefore": 30, "eventDescription": "..."} alebo {"error": "no time found"}. Nic ine.`,
     }],
   })
 
   try {
     const text = res.content[0]?.type === 'text' ? res.content[0].text.trim() : ''
-    const parsed = JSON.parse(text)
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text)
     if (parsed.error || !parsed.reminderTime) return false
 
     const [rHours, rMinutes] = parsed.reminderTime.split(':').map(Number)
-    const now = new Date()
 
-    // Work in Europe/Bratislava time to avoid UTC offset bugs
-    const nowBratislava = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Bratislava' }))
-    const targetBratislava = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Bratislava' }))
-    targetBratislava.setHours(rHours, rMinutes, 0, 0)
-    targetBratislava.setMinutes(targetBratislava.getMinutes() - (parsed.minutesBefore ?? 0))
+    // Build notifyAt in Bratislava timezone
+    const nowBratislava = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Bratislava' }))
+    const notifyBratislava = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Bratislava' }))
+    notifyBratislava.setHours(rHours, rMinutes, 0, 0)
+    notifyBratislava.setMinutes(notifyBratislava.getMinutes() - (parsed.minutesBefore ?? 0))
 
-    // Convert back to UTC
-    const tzOffset = now.getTime() - nowBratislava.getTime()
-    const notifyAt = new Date(targetBratislava.getTime() + tzOffset)
+    const tzOffset = new Date().getTime() - nowBratislava.getTime()
+    const notifyAt = new Date(notifyBratislava.getTime() + tzOffset)
+    const delayMs = notifyAt.getTime() - Date.now()
 
-    if (notifyAt.getTime() <= now.getTime()) return false
+    if (delayMs <= 0 || delayMs > 24 * 60 * 60 * 1000) return false
 
-    // Save to KV so it survives restarts
-    const reminders = await kvGet('sova:timed_reminders') ?? []
-    reminders.push({
-      id: Date.now().toString(),
-      notifyAt: notifyAt.toISOString(),
-      eventDescription: parsed.eventDescription,
-      eventTime: parsed.reminderTime,
-      minutesBefore: parsed.minutesBefore ?? 0,
-      channelId: channel.id,
-    })
-    await kvSet('sova:timed_reminders', reminders)
-
-    const notifyTime = notifyAt.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Bratislava' })
-    return { notifyTime, eventTime: parsed.reminderTime, eventDescription: parsed.eventDescription, minutesBefore: parsed.minutesBefore ?? 0 }
-  } catch {
-    return false
-  }
-}
-
-// ── REMINDER CHECKER (every minute) ─────────────────────────────────────────
-async function checkReminders() {
-  try {
-    const reminders = await kvGet('sova:timed_reminders') ?? []
-    if (!reminders.length) return
-
-    const now = new Date()
-    const due = reminders.filter(r => new Date(r.notifyAt) <= now)
-    const remaining = reminders.filter(r => new Date(r.notifyAt) > now)
-
-    for (const r of due) {
+    // Use setTimeout — simple and reliable
+    setTimeout(async () => {
       try {
-        const ch = await client.channels.fetch(r.channelId)
-        if (ch) await ch.send(`⏰ Pripomienka: **${r.eventDescription}** o ${r.eventTime}!`)
+        await channel.send(`⏰ Pripomienka: **${parsed.eventDescription}** o ${parsed.reminderTime}!`)
       } catch (e) {
         console.error('Reminder send error:', e)
       }
-    }
+    }, delayMs)
 
-    if (due.length > 0) {
-      await kvSet('sova:timed_reminders', remaining)
-    }
+    const notifyTime = notifyBratislava.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' })
+    console.log(`Reminder set: "${parsed.eventDescription}" at ${notifyTime} (in ${Math.round(delayMs/60000)} min)`)
+    return { notifyTime, eventTime: parsed.reminderTime, eventDescription: parsed.eventDescription, minutesBefore: parsed.minutesBefore ?? 0 }
   } catch (e) {
-    console.error('checkReminders error:', e)
+    console.error('scheduleReminder error:', e)
+    return false
   }
 }
 
@@ -216,7 +188,6 @@ client.once('ready', async () => {
   console.log(`SOVA bot ready as ${client.user.tag}`)
   console.log(`Listening on channel: ${CHANNEL_ID}`)
   await loadHistory()
-  setInterval(checkReminders, 60 * 1000) // check every minute
 })
 
 client.on('messageCreate', async (message) => {
