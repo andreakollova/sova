@@ -109,6 +109,12 @@ STYL:
 - Ziadne formalnosti, ziadne "samozrejme" ani podobne roboty vyrazy
 - Raz za cas prirodzene ponukni: "ak chces aby som ti nieco pripomenula alebo zapamatala, len napis"
 
+PRIPOMIENKY – DOLEZITE:
+- Mas schopnost posielat casovane pripomienky sama od seba!
+- Ked ta Natka poprosí o pripomienku (napr. "pripomeň mi o 20:10", "chcem pripomienku na 8:00", "pripomeň mi trening o 18:00"), VZDY potvrď ze si to nastavila a napisˇ presny cas
+- NIKDY nehovor ze nevies posielat pripomienky – VIES to robit!
+- Pripomienky funguju cez automaticky system, nie cez Natkin telefon
+
 Oblasti: marketing, Sportqo, Drixton, LinkedIn, osobny rozvoj, wellness.`
 
 const PLANNING_QUESTIONS = [
@@ -263,8 +269,8 @@ client.on('messageCreate', async (message) => {
   }
 
   // ── TIMED REMINDER ────────────────────────────────────────────────
-  const timedReminderKeywords = ['pripomeň mi', 'pripomen mi', 'upozorni ma', 'nezabudni mi pripomenut']
-  if (timedReminderKeywords.some(kw => textLower.includes(kw))) {
+  const timedReminderKeywords = ['pripomeň mi', 'pripomen mi', 'upozorni ma', 'nezabudni mi pripomenut', 'chcem pripomienku', 'nastav pripomienku', 'pripomienku na', 'pripomienku o', 'pripomeň o', 'pripomen o']
+  if (timedReminderKeywords.some(kw => textLower.includes(kw)) || /pripomien|pripomeň|reminder/.test(textLower) && /\d{1,2}:\d{2}/.test(textLower)) {
     const result = await scheduleReminder(userText, message.channel)
     if (result) {
       await message.channel.send(`Nastavene! Pripomeniem ti ${result.eventDescription} o ${result.notifyTime} (${result.minutesBefore} minut pred ${result.eventTime}) ⏰`)
