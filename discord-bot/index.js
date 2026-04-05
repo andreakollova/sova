@@ -153,9 +153,16 @@ async function scheduleReminder(userText, channel) {
 
     const [rHours, rMinutes] = parsed.reminderTime.split(':').map(Number)
     const now = new Date()
-    const notifyAt = new Date(now)
-    notifyAt.setHours(rHours, rMinutes, 0, 0)
-    notifyAt.setMinutes(notifyAt.getMinutes() - (parsed.minutesBefore ?? 0))
+
+    // Work in Europe/Bratislava time to avoid UTC offset bugs
+    const nowBratislava = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Bratislava' }))
+    const targetBratislava = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Bratislava' }))
+    targetBratislava.setHours(rHours, rMinutes, 0, 0)
+    targetBratislava.setMinutes(targetBratislava.getMinutes() - (parsed.minutesBefore ?? 0))
+
+    // Convert back to UTC
+    const tzOffset = now.getTime() - nowBratislava.getTime()
+    const notifyAt = new Date(targetBratislava.getTime() + tzOffset)
 
     if (notifyAt.getTime() <= now.getTime()) return false
 
