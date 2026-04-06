@@ -59,6 +59,9 @@ async function kvSet(key, value) {
   } catch (e) { console.error('kvSet error:', e) }
 }
 
+// Active reminders: key = normalized description, value = { timeoutId, time, channelId }
+const activeReminders = new Map()
+
 // Conversation history — loaded from KV, persisted after each message
 let history = []
 
@@ -138,6 +141,31 @@ async function saveReminder(text) {
   const reminders = await kvGet('sova:reminders') ?? []
   reminders.push({ text, createdAt: new Date().toISOString() })
   await kvSet('sova:reminders', reminders.slice(-20))
+}
+
+// ── TASK REMINDERS ───────────────────────────────────────────────────────────
+function scheduleTaskReminder(title, time, channel, minutesBefore = 30) {
+  const [rH, rM] = time.split(':').map(Number)
+  const nowBratislava = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Bratislava' }))
+  const notifyBratislava = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Bratislava' }))
+  notifyBratislava.setHours(rH, rM, 0, 0)
+  notifyBratislava.setMinutes(notifyBratislava.getMinutes() - minutesBefore)
+  const tzOffset = new Date().getTime() - nowBratislava.getTime()
+  const notifyAt = new Date(notifyBratislava.getTime() + tzOffset)
+  const delayMs = notifyAt.getTime() - Date.now()
+  if (delayMs <= 0 || delayMs >= 24 * 60 * 60 * 1000) return ''
+
+  const key = title.toLowerCase().trim()
+  if (activeReminders.has(key)) clearTimeout(activeReminders.get(key).timeoutId)
+
+  const timeoutId = setTimeout(async () => {
+    try { await channel.send(`⏰ Pripomienka: **${title}** o ${time} – za ${minutesBefore} minut!`) } catch {}
+    activeReminders.delete(key)
+  }, delayMs)
+
+  const notifyTimeStr = notifyBratislava.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' })
+  activeReminders.set(key, { timeoutId, time, channel, title })
+  return ` Pripomeniem ti to o ${notifyTimeStr} (${minutesBefore} min pred).`
 }
 
 // ── TIMED REMINDERS ──────────────────────────────────────────────────────────
@@ -278,6 +306,28 @@ client.on('messageCreate', async (message) => {
     return
   }
 
+  // ── CANCEL / CHANGE REMINDER ─────────────────────────────────────
+  const norm2 = normalizedText
+  if (/zrus pripomienku|cancel pripomienku|nechcem pripomienku|vypni pripomienku/.test(norm2)) {
+    if (activeReminders.size === 0) {
+      await message.channel.send('Nemas ziadnu aktivnu pripomienku.')
+    } else {
+      activeReminders.forEach(r => clearTimeout(r.timeoutId))
+      activeReminders.clear()
+      await message.channel.send('Zrusila som vsetky pripomienky. ✅')
+    }
+    return
+  }
+  const changeMatch = norm2.match(/zmen pripomienku.{0,20}na (\d{1,2}:\d{2})|pripomeň.{0,10}o (\d{1,2}:\d{2}) namiesto|zmen cas.{0,10}na (\d{1,2}:\d{2})/)
+  if (changeMatch && activeReminders.size > 0) {
+    const newTime = changeMatch[1] || changeMatch[2] || changeMatch[3]
+    const last = [...activeReminders.values()][activeReminders.size - 1]
+    clearTimeout(last.timeoutId)
+    const note = scheduleTaskReminder(last.title, newTime, last.channel)
+    await message.channel.send(`Zmenila som pripomienku na ${newTime}.${note}`)
+    return
+  }
+
   // ── TASK DETECTION ───────────────────────────────────────────────
   const normalizedText = textLower.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   const taskPatterns = /potrebujem |musim |treba |mam (spravit|urobit|dokoncit|pripravit|poslat|zavolat|napisat|odovzdat|odovzdat|odniest|kupit|vybavit|zaplatit)|o \d{1,2}:\d{2} (mam|idem|musim|treba)|pridaj ulohu|zarad do uloh/i
@@ -320,24 +370,10 @@ client.on('messageCreate', async (message) => {
           // Schedule reminder 30 min before if task has specific time today
           let reminderNote = ''
           if (parsed.time && parsed.time !== 'null') {
-            const [rH, rM] = parsed.time.split(':').map(Number)
-            const nowBratislava = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Bratislava' }))
-            const notifyBratislava = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Bratislava' }))
-            notifyBratislava.setHours(rH, rM, 0, 0)
-            notifyBratislava.setMinutes(notifyBratislava.getMinutes() - 30)
-            const tzOffset = new Date().getTime() - nowBratislava.getTime()
-            const notifyAt = new Date(notifyBratislava.getTime() + tzOffset)
-            const delayMs = notifyAt.getTime() - Date.now()
-            if (delayMs > 0 && delayMs < 24 * 60 * 60 * 1000) {
-              const ch = message.channel
-              setTimeout(async () => {
-                try { await ch.send(`⏰ Pripomienka: **${parsed.title}** o ${parsed.time} – za 30 minut!`) } catch {}
-              }, delayMs)
-              reminderNote = ` Pripomeniem ti to 30 min pred (o ${notifyBratislava.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' })}).`
-            }
+            reminderNote = scheduleTaskReminder(parsed.title, parsed.time, message.channel)
           }
 
-          await message.channel.send(`✅ Zapisala som: **${parsed.title}**${deadlineStr}\n\n${followUpText}${reminderNote}`)
+          await message.channel.send(`${followUpText}${reminderNote}`)
           return
         }
       }
