@@ -283,7 +283,7 @@ client.on('messageCreate', async (message) => {
         max_tokens: 150,
         messages: [{
           role: 'user',
-          content: `Z tejto spravy extrahuj ulohu. Sprava: "${userText}". Dnes je ${new Date().toLocaleDateString('sk-SK', { timeZone: 'Europe/Bratislava' })}. Vrat LEN JSON: {"title": "kratky nazov ulohy", "category": "work|personal", "priority": "high|medium|low", "deadline": "YYYY-MM-DD alebo null"}. Nic ine.`,
+          content: `Z tejto spravy extrahuj ulohu. Sprava: "${userText}". Dnes je ${new Date().toLocaleDateString('sk-SK', { timeZone: 'Europe/Bratislava' })}. Vrat LEN JSON: {"title": "kratky nazov ulohy", "category": "work|personal", "priority": "high|medium|low", "deadline": "YYYY-MM-DD alebo null", "time": "HH:MM alebo null"}. Nic ine.`,
         }],
       })
       const taskText = taskRes.content[0]?.type === 'text' ? taskRes.content[0].text.trim() : ''
@@ -312,7 +312,27 @@ client.on('messageCreate', async (message) => {
             }],
           })
           const followUpText = followUp.content[0]?.type === 'text' ? followUp.content[0].text : ''
-          await message.channel.send(`✅ Zapisala som: **${parsed.title}**${deadlineStr}\n\n${followUpText}`)
+          // Schedule reminder 30 min before if task has specific time today
+          let reminderNote = ''
+          if (parsed.time && parsed.time !== 'null') {
+            const [rH, rM] = parsed.time.split(':').map(Number)
+            const nowBratislava = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Bratislava' }))
+            const notifyBratislava = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Bratislava' }))
+            notifyBratislava.setHours(rH, rM, 0, 0)
+            notifyBratislava.setMinutes(notifyBratislava.getMinutes() - 30)
+            const tzOffset = new Date().getTime() - nowBratislava.getTime()
+            const notifyAt = new Date(notifyBratislava.getTime() + tzOffset)
+            const delayMs = notifyAt.getTime() - Date.now()
+            if (delayMs > 0 && delayMs < 24 * 60 * 60 * 1000) {
+              const ch = message.channel
+              setTimeout(async () => {
+                try { await ch.send(`⏰ Pripomienka: **${parsed.title}** o ${parsed.time} – za 30 minut!`) } catch {}
+              }, delayMs)
+              reminderNote = ` Pripomeniem ti to 30 min pred (o ${notifyBratislava.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' })}).`
+            }
+          }
+
+          await message.channel.send(`✅ Zapisala som: **${parsed.title}**${deadlineStr}\n\n${followUpText}${reminderNote}`)
           return
         }
       }
