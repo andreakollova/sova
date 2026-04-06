@@ -274,8 +274,9 @@ client.on('messageCreate', async (message) => {
   }
 
   // ── TASK DETECTION ───────────────────────────────────────────────
+  const normalizedText = textLower.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   const taskPatterns = /potrebujem (spravit|urobit|dokoncit|pripravit|poslat|zavolat|napisat)|musim (spravit|urobit|dokoncit|pripravit|poslat|zavolat|napisat)|treba (spravit|urobit|dokoncit)|pridaj ulohu|zarad do uloh|mam ulohu/i
-  if (taskPatterns.test(userText)) {
+  if (taskPatterns.test(normalizedText)) {
     try {
       const taskRes = await anthropic.messages.create({
         model: 'claude-haiku-4-5-20251001',
@@ -296,14 +297,22 @@ client.on('messageCreate', async (message) => {
             title: parsed.title,
             category: parsed.category ?? 'personal',
             priority: parsed.priority ?? 'medium',
-            deadline: parsed.deadline !== 'null' ? parsed.deadline : undefined,
+            deadline: parsed.deadline && parsed.deadline !== 'null' ? parsed.deadline : undefined,
           }),
         })
         if (res.ok) {
           const deadlineStr = parsed.deadline && parsed.deadline !== 'null'
-            ? ` (deadline: ${new Date(parsed.deadline).toLocaleDateString('sk-SK')})`
-            : ''
-          await message.channel.send(`Zapisala som ulohu: **${parsed.title}**${deadlineStr} ✅\nNajdes ju aj na dashboarde v Ulohy.`)
+            ? ` do ${new Date(parsed.deadline).toLocaleDateString('sk-SK')}` : ''
+          const followUp = await anthropic.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 100,
+            messages: [{
+              role: 'user',
+              content: `Si Sona. Prave si ulozila ulohu "${parsed.title}"${deadlineStr}. Napisˇ 1-2 vety bez diakritiky po slovensky: potvrď ze si to zapisala a prirodzene sa opytaj ci potrebuje pomoc s planovanim alebo nieco ine. Zensky rod pre Natku.`,
+            }],
+          })
+          const followUpText = followUp.content[0]?.type === 'text' ? followUp.content[0].text : ''
+          await message.channel.send(`✅ Zapisala som: **${parsed.title}**${deadlineStr}\n\n${followUpText}`)
           return
         }
       }
