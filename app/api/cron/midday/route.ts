@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
         max_tokens: 100,
         messages: [{
           role: 'user',
-          content: `Si Sona, Natkina osobna asistentka a priatelka. Napís kratky ranný check-in (1-2 vety) bez diakritiky, 100% po slovensky, ziadna azbuka. Prirodzene sa opytaj ako sa ma. Vzdy "Natka" nie "Natko". Natka je zena – zensky rod vzdy. Bud spontanna a uprimna.`,
+          content: `Si Sona, Natkina osobna asistentka a priatelka. Napís kratky ranný check-in (2-3 vety) bez diakritiky, 100% po slovensky, ziadna azbuka. Prirodzene sa opytaj ako sa ma a ci uz ma nejake ulohy alebo plany na dnes. Vzdy "Natka" nie "Natko". Natka je zena – zensky rod vzdy. Bud spontanna a uprimna.`,
         }],
       })
       const checkinMsg = checkinRes.content[0].type === 'text' ? checkinRes.content[0].text : ''

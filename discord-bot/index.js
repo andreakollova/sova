@@ -273,6 +273,45 @@ client.on('messageCreate', async (message) => {
     return
   }
 
+  // ── TASK DETECTION ───────────────────────────────────────────────
+  const taskPatterns = /potrebujem (spravit|urobit|dokoncit|pripravit|poslat|zavolat|napisat)|musim (spravit|urobit|dokoncit|pripravit|poslat|zavolat|napisat)|treba (spravit|urobit|dokoncit)|pridaj ulohu|zarad do uloh|mam ulohu/i
+  if (taskPatterns.test(userText)) {
+    try {
+      const taskRes = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 150,
+        messages: [{
+          role: 'user',
+          content: `Z tejto spravy extrahuj ulohu. Sprava: "${userText}". Dnes je ${new Date().toLocaleDateString('sk-SK', { timeZone: 'Europe/Bratislava' })}. Vrat LEN JSON: {"title": "kratky nazov ulohy", "category": "work|personal", "priority": "high|medium|low", "deadline": "YYYY-MM-DD alebo null"}. Nic ine.`,
+        }],
+      })
+      const taskText = taskRes.content[0]?.type === 'text' ? taskRes.content[0].text.trim() : ''
+      const jsonMatch = taskText.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0])
+        const res = await fetch(`${SOVA_URL}/api/tasks`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'authorization': `Bearer ${CRON_SECRET}` },
+          body: JSON.stringify({
+            title: parsed.title,
+            category: parsed.category ?? 'personal',
+            priority: parsed.priority ?? 'medium',
+            deadline: parsed.deadline !== 'null' ? parsed.deadline : undefined,
+          }),
+        })
+        if (res.ok) {
+          const deadlineStr = parsed.deadline && parsed.deadline !== 'null'
+            ? ` (deadline: ${new Date(parsed.deadline).toLocaleDateString('sk-SK')})`
+            : ''
+          await message.channel.send(`Zapisala som ulohu: **${parsed.title}**${deadlineStr} ✅\nNajdes ju aj na dashboarde v Ulohy.`)
+          return
+        }
+      }
+    } catch (e) {
+      console.error('Task detection error:', e)
+    }
+  }
+
   // ── GENERAL CHAT ─────────────────────────────────────────────────
   history.push({ role: 'user', content: userText })
   if (history.length > 40) history.splice(0, history.length - 40)
