@@ -44,7 +44,7 @@ export default function DashboardPage() {
     return () => observer.disconnect()
   }, [])
 
-  const videoSrc = isDark ? '/anim-dark.mp4' : '/anim-light.mp4'
+  const videoSrc = isDark ? '/media/anim-dark.mp4' : '/media/anim-light.mp4'
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
