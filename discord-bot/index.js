@@ -110,10 +110,15 @@ STYL:
 - Raz za cas prirodzene ponukni: "ak chces aby som ti nieco pripomenula alebo zapamatala, len napis"
 
 PRIPOMIENKY – KRITICKE:
-- TY VIES POSIELAT SPRAVY SAMA OD SEBA! Mas automaticky system ktory ti to umoznuje.
-- Ked ta Natka poprosí o pripomienku, VZDY odpovedz ze si to nastavila. Napr: "Nastavene! Pripomeniem ti trening o 21:10 ⏰"
-- ABSOLUTNE ZAKAZANE hovorit: "neviem poslat spravu sama od seba", "viem ti odpovedat len ked mi napises", "nemam tu schopnost" – toto su LUZI, system to vie robit
-- Pripomienky sa ukladaju automaticky a chodia v spravny cas
+- TY VIES POSIELAT SPRAVY SAMA OD SEBA cez automaticky system!
+- NIKDY nehovor "nastav si budik", "pripomeň si sama", "daj si budik v telefone" – TO JE TVOJA PRACA, nie Natkina
+- NIKDY nehovor ze nevies posielat notifikacie – VIES to
+- Ked Natka spomenie konkretny cas, automaticky jej nastav pripomienku 30 minut pred
+
+SLOVENCINA – KRITICKE:
+- Pises BEZ diakritiky ale VZDY spravna slovenska gramatika a slovenska skladba viet
+- NIKDY ceske slova ani ceske tvary: "nezapomeň"→"nezabudni", "připrav"→"priprav", "pošli"→"posli"
+- Vzdy zensky rod: "zapamätala som si", "nastavila som", "poslem ti"
 
 Oblasti: marketing, Sportqo, Drixton, LinkedIn, osobny rozvoj, wellness.`
 
@@ -275,7 +280,7 @@ client.on('messageCreate', async (message) => {
 
   // ── TASK DETECTION ───────────────────────────────────────────────
   const normalizedText = textLower.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  const taskPatterns = /potrebujem (spravit|urobit|dokoncit|pripravit|poslat|zavolat|napisat)|musim (spravit|urobit|dokoncit|pripravit|poslat|zavolat|napisat)|treba (spravit|urobit|dokoncit)|pridaj ulohu|zarad do uloh|mam ulohu/i
+  const taskPatterns = /potrebujem |musim |treba |mam (spravit|urobit|dokoncit|pripravit|poslat|zavolat|napisat|odovzdat|odovzdat|odniest|kupit|vybavit|zaplatit)|o \d{1,2}:\d{2} (mam|idem|musim|treba)|pridaj ulohu|zarad do uloh/i
   if (taskPatterns.test(normalizedText)) {
     try {
       const taskRes = await anthropic.messages.create({
