@@ -280,20 +280,23 @@ export async function setPomodoro(session: PomodoroSession | null): Promise<void
 
 export async function isWithinTimeWindow(key: string, targetTime: string, windowMinutes = 14): Promise<boolean> {
   const last = await kvGet<string>(key)
-  const now = new Date()
+
+  // Use Bratislava local time for comparison
+  const nowBratislava = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Bratislava' }))
   const [hours, minutes] = targetTime.split(':').map(Number)
-  const target = new Date()
+  const target = new Date(nowBratislava)
   target.setHours(hours, minutes, 0, 0)
 
-  const diffMs = Math.abs(now.getTime() - target.getTime())
+  const diffMs = Math.abs(nowBratislava.getTime() - target.getTime())
   const diffMin = diffMs / 60000
 
   if (diffMin > windowMinutes) return false
   if (last) {
     const lastDate = new Date(last)
-    if (lastDate.toDateString() === now.toDateString()) return false
+    const lastBratislava = new Date(lastDate.toLocaleString('en-US', { timeZone: 'Europe/Bratislava' }))
+    if (lastBratislava.toDateString() === nowBratislava.toDateString()) return false
   }
 
-  await kvSet(key, now.toISOString())
+  await kvSet(key, new Date().toISOString())
   return true
 }

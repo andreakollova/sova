@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     const settings = await getSettings()
 
     // 10:00 work check-in
-    const shouldWork = await isWithinTimeWindow('sova:cron:work:last', '10:10')
+    const shouldWork = await isWithinTimeWindow('sova:cron:work:last', '10:35')
     if (shouldWork) {
       const openTasks = await getTopPriorityTasks(3)
       const tasksLine = openTasks.length > 0
