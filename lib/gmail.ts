@@ -76,7 +76,7 @@ export async function getDraftReply(email: EmailMessage, context: string = ''): 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
   const response = await client.messages.create({
-    model: 'claude-opus-4-5',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 500,
     messages: [
       {

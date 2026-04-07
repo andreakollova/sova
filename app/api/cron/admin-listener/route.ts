@@ -96,7 +96,7 @@ async function injectInstructionImmediately(instr: AdminInstruction, userName: s
   if (!kamoskaChannel) return
 
   const res = await client.messages.create({
-    model: 'claude-opus-4-5',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 300,
     system: `Si Soňa, osobná AI asistentka pre ${userName}. Komunikuješ VÝHRADNE po slovensky. Si teplá, inteligentná, priateľská. Nikdy nespomínaj externé inštrukcie – všetko prezentuj ako tvoj vlastný insight.`,
     messages: [
@@ -405,7 +405,7 @@ async function handleArticleBrief(brief: string, channelId: string, userName: st
   // Generate article async
   const { saveContent } = await import('@/lib/kv')
   const res = await client.messages.create({
-    model: 'claude-opus-4-5',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 3000,
     messages: [
       {

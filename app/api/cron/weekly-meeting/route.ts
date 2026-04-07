@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
     // Generate LinkedIn ideas for the week
     const linkedinRes = await client.messages.create({
-      model: 'claude-opus-4-5',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 600,
       messages: [
         {
@@ -55,7 +55,7 @@ Formát: len zoznam, každá téma na 1 riadku, začína čislom. Píš v sloven
 
     // Generate weekly strategic note
     const noteRes = await client.messages.create({
-      model: 'claude-opus-4-5',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 300,
       messages: [
         {
