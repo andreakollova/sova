@@ -96,7 +96,7 @@ export default function TaskBoard({ fullView = false }: { fullView?: boolean }) 
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-3">
-          <span className="text-[13px] font-normal text-foreground">Ulohy</span>
+          <span className="text-[13px] font-normal text-foreground">Úlohy</span>
           <div className="flex gap-1">
             {(['all', 'work', 'personal'] as const).map((f) => (
               <button
@@ -109,7 +109,7 @@ export default function TaskBoard({ fullView = false }: { fullView?: boolean }) 
                     : { color: '#666666' }
                 }
               >
-                {f === 'all' ? 'Vsetky' : f === 'work' ? 'Praca' : 'Osobne'}
+                {f === 'all' ? 'Všetky' : f === 'work' ? 'Práca' : 'Osobné'}
               </button>
             ))}
           </div>
@@ -144,8 +144,8 @@ export default function TaskBoard({ fullView = false }: { fullView?: boolean }) 
               onChange={(e) => setNewTask((p: any) => ({ ...p, category: e.target.value }))}
               className="input flex-1"
             >
-              <option value="work">Praca</option>
-              <option value="personal">Osobne</option>
+              <option value="work">Práca</option>
+              <option value="personal">Osobné</option>
             </select>
             <select
               value={newTask.priority}
@@ -177,7 +177,7 @@ export default function TaskBoard({ fullView = false }: { fullView?: boolean }) 
             <div className="w-4 h-4 border border-border border-t-muted-foreground rounded-full animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
-          <p className="text-[12px] font-light text-muted-foreground text-center py-6">Ziadne otvorene ulohy</p>
+          <p className="text-[12px] font-light text-muted-foreground text-center py-6">Žiadne otvorené úlohy</p>
         ) : (
           (fullView ? filtered : filtered.slice(0, 5)).map((task) => (
             <div
@@ -240,7 +240,7 @@ export default function TaskBoard({ fullView = false }: { fullView?: boolean }) 
       {done.length > 0 && fullView && (
         <div className="px-4 pb-3">
           <p className="text-[10px] font-normal uppercase tracking-[0.1em] text-muted-foreground mb-2">
-            Dokoncene
+            Dokončené
           </p>
           {done.map((task) => (
             <div key={task.id} className="flex items-center gap-3 px-3 py-1.5 rounded-lg opacity-40">

@@ -80,7 +80,7 @@ export default function Sidebar({ active }: { active: string }) {
           className="text-[10px] font-normal uppercase tracking-widest"
           style={{ color: dark ? '#444444' : '#bbbbbb' }}
         >
-          Navigacia
+          Navigácia
         </span>
       </div>
 
@@ -131,7 +131,7 @@ export default function Sidebar({ active }: { active: string }) {
         <div className="hidden lg:flex items-center gap-2 px-2.5 py-2">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
           <span className="text-[11px] font-light" style={{ color: dark ? '#555555' : '#999999' }}>
-            Sona aktivna
+            Sona aktívna
           </span>
         </div>
         <div className="flex lg:hidden justify-center py-2">
@@ -151,13 +151,13 @@ export default function Sidebar({ active }: { active: string }) {
             (e.currentTarget as HTMLElement).style.background = ''
             ;(e.currentTarget as HTMLElement).style.color = dark ? '#555555' : '#999999'
           }}
-          title={dark ? 'Prepnut na svetly rezim' : 'Prepnut na tmavy rezim'}
+          title={dark ? 'Prepnúť na svetlý režim' : 'Prepnúť na tmavý režim'}
         >
           {dark
             ? <Sun size={14} strokeWidth={1.5} />
             : <Moon size={14} strokeWidth={1.5} />
           }
-          <span className="hidden lg:block">{dark ? 'Svetly rezim' : 'Tmavy rezim'}</span>
+          <span className="hidden lg:block">{dark ? 'Svetlý režim' : 'Tmavý režim'}</span>
         </button>
       </div>
     </aside>

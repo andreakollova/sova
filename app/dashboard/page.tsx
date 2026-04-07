@@ -7,8 +7,8 @@ import GmailAlerts from '@/components/GmailAlerts'
 import TaskBoard from '@/components/TaskBoard'
 import { Clock, Dumbbell, CheckSquare, Zap } from 'lucide-react'
 
-const SK_DAYS = ['Nedela', 'Pondelok', 'Utorok', 'Streda', 'Stvrtok', 'Piatok', 'Sobota']
-const SK_MONTHS = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
+const SK_DAYS = ['Nedeľa', 'Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok', 'Sobota']
+const SK_MONTHS = ['jan', 'feb', 'mar', 'apr', 'máj', 'jún', 'júl', 'aug', 'sep', 'okt', 'nov', 'dec']
 
 function getSkDate() {
   const d = new Date()
@@ -17,9 +17,9 @@ function getSkDate() {
 
 const STATS = [
   { icon: Clock, label: 'Focus time dnes', value: '0 min' },
-  { icon: Dumbbell, label: 'Treningy tento tydzen', value: '0' },
-  { icon: CheckSquare, label: 'Ulohy splnene', value: '0' },
-  { icon: Zap, label: 'Pomodoro rounds', value: '0' },
+  { icon: Dumbbell, label: 'Tréningy tento týždeň', value: '0' },
+  { icon: CheckSquare, label: 'Úlohy splnené', value: '0' },
+  { icon: Zap, label: 'Pomodoro cykly', value: '0' },
 ]
 
 export default function DashboardPage() {
@@ -80,7 +80,7 @@ export default function DashboardPage() {
           {/* ── Stats ── */}
           <div>
             <p className="text-[10px] font-normal uppercase tracking-[0.1em] text-[#555] dark:text-[#444] mb-3">
-              Statistiky
+              Štatistiky
             </p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {STATS.map(({ icon: Icon, label, value }) => (
@@ -103,7 +103,7 @@ export default function DashboardPage() {
             {/* Calendar – 2 cols */}
             <div className="lg:col-span-2">
               <p className="text-[10px] font-normal uppercase tracking-[0.1em] text-[#555] dark:text-[#444] mb-3">
-                Dnesny kalendar
+                Dnešný kalendár
               </p>
               <CalendarView />
             </div>
@@ -111,7 +111,7 @@ export default function DashboardPage() {
             {/* Emails */}
             <div>
               <p className="text-[10px] font-normal uppercase tracking-[0.1em] text-[#555] dark:text-[#444] mb-3">
-                Dolezite emaily
+                Dôležité emaily
               </p>
               <GmailAlerts />
             </div>
@@ -120,7 +120,7 @@ export default function DashboardPage() {
           {/* ── Tasks ── */}
           <div>
             <p className="text-[10px] font-normal uppercase tracking-[0.1em] text-[#555] dark:text-[#444] mb-3">
-              Ulohy
+              Úlohy
             </p>
             <TaskBoard />
           </div>

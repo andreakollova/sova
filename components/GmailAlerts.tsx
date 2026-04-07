@@ -44,7 +44,7 @@ export default function GmailAlerts() {
       <div className="p-3 space-y-1.5 min-h-[80px]">
         {emails.length === 0 ? (
           <p className="text-[12px] font-light text-muted-foreground text-center py-4">
-            {loading ? 'Nacitavam...' : 'Ziadne nove emaily'}
+            {loading ? 'Načítavam...' : 'Žiadne nové emaily'}
           </p>
         ) : (
           emails.slice(0, 3).map((em) => (

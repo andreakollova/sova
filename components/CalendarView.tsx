@@ -60,7 +60,7 @@ export default function CalendarView() {
             <div className="w-4 h-4 border border-border border-t-muted-foreground rounded-full animate-spin" />
           </div>
         ) : events.length === 0 ? (
-          <p className="text-[12px] font-light text-muted-foreground text-center py-6">Ziadne udalosti</p>
+          <p className="text-[12px] font-light text-muted-foreground text-center py-6">Žiadne udalosti</p>
         ) : (
           events.map((ev) => {
             const isWorkout = WORKOUT_KW.some((kw) => ev.summary.toLowerCase().includes(kw))
