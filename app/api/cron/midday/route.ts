@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     const settings = await getSettings()
 
     // 10:00 work check-in
-    const shouldWork = await isWithinTimeWindow('sova:cron:work:last', '10:00')
+    const shouldWork = await isWithinTimeWindow('sova:cron:work:last', '10:10')
     if (shouldWork) {
       const openTasks = await getTopPriorityTasks(3)
       const tasksLine = openTasks.length > 0
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
         max_tokens: 120,
         messages: [{
           role: 'user',
-          content: `Si Sona. Napís kratku spravu (2-3 vety) bez diakritiky po slovensky. Opytaj sa Natky ci zacina pracovat a co ju dnes caka. ${tasksLine} Ponukni ze mozes zapnut Pomodoro timer ked bude pripravena (nech napise "zapni pomodoro"). Zensky rod. Bud prirodzena.`,
+          content: `Si Sona. Napís kratku spravu (2-3 vety) bez diakritiky po slovensky. Opytaj sa Natky ci zacina pracovat a co ju dnes caka. ${openTasks.length > 0 ? tasksLine : 'Nema ziadne otvorene ulohy – napisˇ jej to a opytaj sa ci nieco planuje.'} Ponukni ze mozes zapnut Pomodoro timer ked bude pripravena (nech napise "zapni pomodoro"). Zensky rod. Bud prirodzena.`,
         }],
       })
       const workMsg = workRes.content[0].type === 'text' ? workRes.content[0].text : ''
