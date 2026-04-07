@@ -306,6 +306,42 @@ client.on('messageCreate', async (message) => {
     return
   }
 
+  // ── TASK COMPLETION ──────────────────────────────────────────────
+  const completionNorm = normalizedText
+  if (/spravila som|hotovo|dokoncila som|splnila som|uz som|vybavila som|poslala som|zavolala som|odovzdala som|kupila som/.test(completionNorm)) {
+    try {
+      const tasksRes = await fetch(`${SOVA_URL}/api/tasks`, {
+        headers: { authorization: `Bearer ${CRON_SECRET}` },
+      })
+      const allTasks = await tasksRes.json()
+      const openTasks = Array.isArray(allTasks) ? allTasks.filter(t => t.status !== 'done') : []
+      if (openTasks.length > 0) {
+        const matchRes = await anthropic.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 50,
+          messages: [{
+            role: 'user',
+            content: `Sprava: "${userText}". Zoznam uloh: ${openTasks.map((t, i) => `${i}:${t.title}`).join(', ')}. Ktora uloha bola splnena? Vrat LEN cislo indexu alebo "none". Nic ine.`,
+          }],
+        })
+        const idx = matchRes.content[0]?.type === 'text' ? matchRes.content[0].text.trim() : 'none'
+        const taskIndex = parseInt(idx)
+        if (!isNaN(taskIndex) && openTasks[taskIndex]) {
+          const task = openTasks[taskIndex]
+          await fetch(`${SOVA_URL}/api/tasks`, {
+            method: 'PATCH',
+            headers: { 'content-type': 'application/json', authorization: `Bearer ${CRON_SECRET}` },
+            body: JSON.stringify({ id: task.id, status: 'done' }),
+          })
+          await message.channel.send(`Super, odfajkla som "**${task.title}**" ako splnenu! 🎉`)
+          return
+        }
+      }
+    } catch (e) {
+      console.error('Task completion error:', e)
+    }
+  }
+
   // ── CANCEL / CHANGE REMINDER ─────────────────────────────────────
   const norm2 = normalizedText
   if (/zrus pripomienku|cancel pripomienku|nechcem pripomienku|vypni pripomienku/.test(norm2)) {

@@ -20,12 +20,16 @@ export async function GET(req: NextRequest) {
     // 11:00 check-in
     const shouldCheckin = await isWithinTimeWindow('sova:cron:checkin:last', '11:00')
     if (shouldCheckin) {
+      const openTasks = await getTopPriorityTasks(3)
+      const tasksLine = openTasks.length > 0
+        ? `Otvorene ulohy: ${openTasks.map((t) => t.title).join(', ')}.`
+        : 'Nema ziadne otvorene ulohy.'
       const checkinRes = await client.messages.create({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 100,
+        max_tokens: 120,
         messages: [{
           role: 'user',
-          content: `Si Sona, Natkina osobna asistentka a priatelka. Napís kratky ranný check-in (2-3 vety) bez diakritiky, 100% po slovensky, ziadna azbuka. Prirodzene sa opytaj ako sa ma a ci uz ma nejake ulohy alebo plany na dnes. Vzdy "Natka" nie "Natko". Natka je zena – zensky rod vzdy. Bud spontanna a uprimna.`,
+          content: `Si Sona, Natkina osobna asistentka a priatelka. Napís kratky dopoludajsi check-in (2-3 vety) bez diakritiky, 100% po slovensky. Opytaj sa ako sa ma. ${tasksLine} Ak ma otvorene ulohy, prirodzene sa opytaj ci uz nieco z toho spravila alebo ako to ide. Vzdy "Natka" nie "Natko". Zensky rod vzdy. Bud spontanna.`,
         }],
       })
       const checkinMsg = checkinRes.content[0].type === 'text' ? checkinRes.content[0].text : ''
