@@ -18,7 +18,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const baseUrl = process.env.NEXTAUTH_URL ?? 'http://localhost:3001'
+  const reqUrl = new URL(req.url)
+  const baseUrl = `${reqUrl.protocol}//${reqUrl.host}`
   const secret = process.env.CRON_SECRET
 
   const results = await Promise.allSettled(
