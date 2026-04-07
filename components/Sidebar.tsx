@@ -60,16 +60,16 @@ export default function Sidebar({ active }: { active: string }) {
       <div className="px-3 py-4 lg:px-4 lg:py-5 flex items-center gap-3">
         <div
           className="w-7 h-7 rounded-lg shrink-0 flex items-center justify-center"
-          style={{ background: '#c96a4e' }}
+          style={{ background: '#0b1050' }}
         >
           <span className="text-white text-[13px] font-normal leading-none">S</span>
         </div>
         <div className="hidden lg:block">
           <p className="text-[13px] font-normal leading-tight" style={{ color: dark ? '#e8e8e8' : '#111111' }}>
-            SOVA
+            SOŇA
           </p>
           <p className="text-[10px]" style={{ color: dark ? '#555555' : '#999999' }}>
-            Sona · AI Asistentka
+            Sova · AI Asistentka
           </p>
         </div>
       </div>
@@ -131,7 +131,7 @@ export default function Sidebar({ active }: { active: string }) {
         <div className="hidden lg:flex items-center gap-2 px-2.5 py-2">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
           <span className="text-[11px] font-light" style={{ color: dark ? '#555555' : '#999999' }}>
-            Sona aktívna
+            Soňa aktívna
           </span>
         </div>
         <div className="flex lg:hidden justify-center py-2">
