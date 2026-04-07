@@ -62,6 +62,41 @@ async function kvSet(key, value) {
 // Active reminders: key = normalized description, value = { timeoutId, time, channelId }
 const activeReminders = new Map()
 
+// Pomodoro state
+let pomodoroTimeout = null
+let pomodoroRound = 0
+
+async function startPomodoro(channel, minutes = 25) {
+  if (pomodoroTimeout) {
+    clearTimeout(pomodoroTimeout)
+  }
+  pomodoroRound++
+  const round = pomodoroRound
+  await channel.send(`🎯 Pomodoro spustený! Máš ${minutes} minút sústredenia. Daj do toho všetko, Fondula! 💪`)
+  pomodoroTimeout = setTimeout(async () => {
+    try {
+      // Increment daily counter in KV
+      const today = new Date().toISOString().slice(0, 10)
+      const key = `sova:pomodoro:count:${today}`
+      const current = await kvGet(key) ?? 0
+      await kvSet(key, (current || 0) + 1)
+      await channel.send(`✅ Pomodoro č. ${round} hotový! Skvelá práca 🎉\nDaj si 5-minútovú prestávku — zaslúžiš si to.`)
+      pomodoroTimeout = null
+    } catch (e) {
+      console.error('Pomodoro end error:', e)
+    }
+  }, minutes * 60 * 1000)
+}
+
+function stopPomodoro() {
+  if (pomodoroTimeout) {
+    clearTimeout(pomodoroTimeout)
+    pomodoroTimeout = null
+    return true
+  }
+  return false
+}
+
 // Conversation history — loaded from KV, persisted after each message
 let history = []
 
@@ -303,6 +338,18 @@ client.on('messageCreate', async (message) => {
     })
     const reply = res.content[0]?.type === 'text' ? res.content[0].text : 'Zapisane! 📝'
     await message.channel.send(reply)
+    return
+  }
+
+  // ── POMODORO ─────────────────────────────────────────────────────
+  if (/zapni pomodoro|spusti pomodoro|zacat pomodoro|začat pomodoro|start pomodoro|pomodoro start|ano.*pomodoro|pomodoro.*ano/i.test(normalizedText) ||
+      (normalizedText.includes('pomodoro') && /ano|start|zapni|spusti|zacni/i.test(normalizedText))) {
+    await startPomodoro(message.channel)
+    return
+  }
+  if (/zastav pomodoro|stop pomodoro|zrus pomodoro|koniec pomodoro/i.test(normalizedText)) {
+    const stopped = stopPomodoro()
+    await message.channel.send(stopped ? 'Pomodoro zastavený. ⏹️' : 'Žiadny aktívny Pomodoro.')
     return
   }
 

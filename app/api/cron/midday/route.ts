@@ -17,6 +17,26 @@ export async function GET(req: NextRequest) {
   try {
     const settings = await getSettings()
 
+    // 10:00 work check-in
+    const shouldWork = await isWithinTimeWindow('sova:cron:work:last', '10:00')
+    if (shouldWork) {
+      const openTasks = await getTopPriorityTasks(3)
+      const tasksLine = openTasks.length > 0
+        ? `Otvorene ulohy: ${openTasks.map((t) => t.title).join(', ')}.`
+        : 'Nema ziadne otvorene ulohy.'
+      const workRes = await client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 120,
+        messages: [{
+          role: 'user',
+          content: `Si Sona. Napís kratku spravu (2-3 vety) bez diakritiky po slovensky. Opytaj sa Natky ci zacina pracovat a co ju dnes caka. ${tasksLine} Ponukni ze mozes zapnut Pomodoro timer ked bude pripravena (nech napise "zapni pomodoro"). Zensky rod. Bud prirodzena.`,
+        }],
+      })
+      const workMsg = workRes.content[0].type === 'text' ? workRes.content[0].text : ''
+      if (workMsg) await sendDiscordMessage(workMsg, settings.discordChannelId)
+      return NextResponse.json({ success: true, type: 'work_checkin' })
+    }
+
     // 11:00 check-in
     const shouldCheckin = await isWithinTimeWindow('sova:cron:checkin:last', '11:00')
     if (shouldCheckin) {

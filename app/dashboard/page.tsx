@@ -15,17 +15,19 @@ function getSkDate() {
   return `${SK_DAYS[d.getDay()]}, ${d.getDate()}. ${SK_MONTHS[d.getMonth()]} ${d.getFullYear()}`
 }
 
-const STATS = [
-  { icon: Clock, label: 'Focus time dnes', value: '0 min' },
-  { icon: Dumbbell, label: 'Tréningy tento týždeň', value: '0' },
-  { icon: CheckSquare, label: 'Úlohy splnené', value: '0' },
-  { icon: Zap, label: 'Pomodoro cykly', value: '0' },
-]
-
 export default function DashboardPage() {
   const [skDate, setSkDate] = useState('')
   const [isDark, setIsDark] = useState(true)
   const [videoLoaded, setVideoLoaded] = useState(false)
+  const [completedToday, setCompletedToday] = useState(0)
+  const [pomodoroCount, setPomodoroCount] = useState(0)
+
+  useEffect(() => {
+    fetch('/api/stats').then(r => r.json()).then(d => {
+      setCompletedToday(d.completedToday ?? 0)
+      setPomodoroCount(d.pomodoroCount ?? 0)
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     setSkDate(getSkDate())
@@ -83,7 +85,12 @@ export default function DashboardPage() {
               Štatistiky
             </p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              {STATS.map(({ icon: Icon, label, value }) => (
+              {[
+                { icon: Clock, label: 'Focus time dnes', value: '0 min' },
+                { icon: Dumbbell, label: 'Tréningy tento týždeň', value: '0' },
+                { icon: CheckSquare, label: 'Úlohy splnené', value: String(completedToday) },
+                { icon: Zap, label: 'Pomodoro cykly', value: String(pomodoroCount) },
+              ].map(({ icon: Icon, label, value }) => (
                 <div
                   key={label}
                   className="bg-card border border-border rounded-xl p-4 flex flex-col gap-2"
