@@ -341,8 +341,11 @@ client.on('messageCreate', async (message) => {
     return
   }
 
+  // ── NORMALIZE (used by multiple sections below) ──────────────────
+  const normalizedText = textLower.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+
   // ── POMODORO ─────────────────────────────────────────────────────
-  if (/zapni pomodoro|spusti pomodoro|zacat pomodoro|začat pomodoro|start pomodoro|pomodoro start|ano.*pomodoro|pomodoro.*ano/i.test(normalizedText) ||
+  if (/zapni pomodoro|spusti pomodoro|zacat pomodoro|zacat pomodoro|start pomodoro|pomodoro start|ano.*pomodoro|pomodoro.*ano/i.test(normalizedText) ||
       (normalizedText.includes('pomodoro') && /ano|start|zapni|spusti|zacni/i.test(normalizedText))) {
     await startPomodoro(message.channel)
     return
@@ -412,7 +415,6 @@ client.on('messageCreate', async (message) => {
   }
 
   // ── TASK DETECTION ───────────────────────────────────────────────
-  const normalizedText = textLower.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   const taskPatterns = /potrebujem |musim |treba |mam (spravit|urobit|dokoncit|pripravit|poslat|zavolat|napisat|odovzdat|odovzdat|odniest|kupit|vybavit|zaplatit)|o \d{1,2}:\d{2} (mam|idem|musim|treba)|pridaj ulohu|zarad do uloh/i
   if (taskPatterns.test(normalizedText)) {
     try {
