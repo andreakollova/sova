@@ -232,7 +232,7 @@ async function scheduleReminder(userText, channel) {
     const notifyAt = new Date(notifyBratislava.getTime() + tzOffset)
     const delayMs = notifyAt.getTime() - Date.now()
 
-    if (delayMs <= 0 || delayMs > 24 * 60 * 60 * 1000) return false
+    if (delayMs <= 0 || delayMs > 24 * 60 * 60 * 1000) return 'too_close'
 
     // Use setTimeout — simple and reliable
     setTimeout(async () => {
@@ -318,8 +318,10 @@ client.on('messageCreate', async (message) => {
   const timedReminderKeywords = ['pripomeň mi', 'pripomen mi', 'upozorni ma', 'nezabudni mi pripomenut', 'chcem pripomienku', 'nastav pripomienku', 'pripomienku na', 'pripomienku o', 'pripomeň o', 'pripomen o']
   if (timedReminderKeywords.some(kw => textLower.includes(kw)) || /pripomien|pripomeň|reminder/.test(textLower) && /\d{1,2}:\d{2}/.test(textLower)) {
     const result = await scheduleReminder(userText, message.channel)
-    if (result) {
+    if (result && result !== 'too_close') {
       await message.channel.send(`Nastavene! Pripomeniem ti ${result.eventDescription} o ${result.notifyTime} (${result.minutesBefore} minut pred ${result.eventTime}) ⏰`)
+    } else if (result === 'too_close') {
+      await message.channel.send(`Ou, to uz je o chvilku! Pripomienku viem nastavit iba ked mam aspon 15 minut cas. Skus ma poziadat skor 🙏`)
     } else {
       await message.channel.send(`Hmm, nevedela som rozpoznat cas. Skus napisat napr. "mam trening o 10:00, pripomeň mi pol hodinu predtym" 🙏`)
     }
