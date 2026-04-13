@@ -10,9 +10,9 @@ export default function TasksPage() {
       <main className="flex-1 overflow-auto px-8 py-8">
         <div className="max-w-[900px] mx-auto space-y-6">
           <div>
-            <h1 className="text-[22px] font-normal text-foreground">Ulohy</h1>
+            <h1 className="text-[22px] font-normal text-foreground">Úlohy</h1>
             <p className="text-[13px] font-light text-muted-foreground mt-1">
-              Sona sleduje tvoje priority a deadliny
+              Soňa sleduje tvoje priority a deadliny
             </p>
           </div>
           <TaskBoard fullView />

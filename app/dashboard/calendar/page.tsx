@@ -39,7 +39,7 @@ export default function CalendarPage() {
         }),
       })
       if (res.ok) {
-        setMsg('Udalost bola pridana do kalendara!')
+        setMsg('Udalosť bola pridaná do kalendára!')
         setForm({ title: '', date: new Date().toISOString().split('T')[0], time: '09:00', duration: '60' })
       } else {
         setMsg('Pridanie zatial nie je aktivne – API nepodporuje POST.')
@@ -61,9 +61,9 @@ export default function CalendarPage() {
 
           {/* Header */}
           <div>
-            <h1 className="text-[22px] font-normal text-foreground">Kalendar</h1>
+            <h1 className="text-[22px] font-normal text-foreground">Kalendár</h1>
             <p className="text-[13px] font-light text-muted-foreground mt-1">
-              Prehlad udalosti a pridavanie novych
+              Prehľad udalostí a pridávanie nových
             </p>
           </div>
 
@@ -80,23 +80,23 @@ export default function CalendarPage() {
             {/* Add event form */}
             <div>
               <p className="text-[10px] font-normal uppercase tracking-[0.1em] text-[#555] dark:text-[#444] mb-3">
-                Nova udalost
+                Nová udalosť
               </p>
               <div className="bg-card border border-border rounded-xl overflow-hidden">
                 <form onSubmit={submit} className="p-4 space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-light text-muted-foreground">Nazov udalosti</label>
+                    <label className="text-[11px] font-light text-muted-foreground">Názov udalosti</label>
                     <input
                       required
                       value={form.title}
                       onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                      placeholder="napr. Meetup s timom"
+                      placeholder="napr. Meetup s tímom"
                       className="input"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-light text-muted-foreground">Datum</label>
+                    <label className="text-[11px] font-light text-muted-foreground">Dátum</label>
                     <input
                       type="date"
                       value={form.date}
@@ -107,7 +107,7 @@ export default function CalendarPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <label className="text-[11px] font-light text-muted-foreground">Cas</label>
+                      <label className="text-[11px] font-light text-muted-foreground">Čas</label>
                       <input
                         type="time"
                         value={form.time}
@@ -172,7 +172,7 @@ export default function CalendarPage() {
                   >
                     <Info size={11} strokeWidth={1.5} className="text-muted-foreground mt-0.5 shrink-0" />
                     <p className="text-[11px] font-light text-muted-foreground leading-relaxed">
-                      Udalosti mozete pridavat aj cez Sonu v chate – napisat: „pridaj trening v piatok o 18:00"
+                      Udalosti môžete pridávať aj cez Soňu v chate – napíšte: „pridaj tréning v piatok o 18:00"
                     </p>
                   </div>
                 </div>

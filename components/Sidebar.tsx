@@ -15,7 +15,7 @@ import {
 
 const nav = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', id: 'dashboard' },
-  { href: '/dashboard/tasks', icon: CheckSquare, label: 'Ulohy', id: 'tasks' },
+  { href: '/dashboard/tasks', icon: CheckSquare, label: 'Úlohy', id: 'tasks' },
   { href: '/dashboard/calendar', icon: CalendarDays, label: 'Kalendár', id: 'calendar' },
   { href: '/dashboard/content', icon: Feather, label: 'Content', id: 'content' },
   { href: '/dashboard/settings', icon: Settings, label: 'Nastavenia', id: 'settings' },

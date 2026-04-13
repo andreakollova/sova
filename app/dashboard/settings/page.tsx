@@ -24,12 +24,12 @@ const WORKOUT_OPTIONS = [
   { id: 'beh', label: 'Beh' },
   { id: 'fitness', label: 'Fitness' },
   { id: 'hokej', label: 'Hokej' },
-  { id: 'plavanie', label: 'Plavanie' },
-  { id: 'joga', label: 'Joga' },
-  { id: 'inne', label: 'Ine' },
+  { id: 'plavanie', label: 'Plávanie' },
+  { id: 'joga', label: 'Jóga' },
+  { id: 'inne', label: 'Iné' },
 ]
 
-const DAY_LABELS = ['Pondelok', 'Utorok', 'Streda', 'Stvrtok', 'Piatok', 'Sobota', 'Nedela']
+const DAY_LABELS = ['Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok', 'Sobota', 'Nedeľa']
 const DAY_IDS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -118,7 +118,7 @@ export default function SettingsPage() {
           <div>
             <h1 className="text-[22px] font-normal text-foreground">Nastavenia</h1>
             <p className="text-[13px] font-light text-muted-foreground mt-1">
-              Prispôsob si Sonu podla seba
+              Prispôsob si Soňu podľa seba
             </p>
           </div>
 
@@ -146,9 +146,9 @@ export default function SettingsPage() {
           </Section>
 
           {/* ── Moj rezim ── */}
-          <Section title="Moj rezim" icon={<Clock size={14} strokeWidth={1.5} className="text-muted-foreground" />}>
+          <Section title="Môj režim" icon={<Clock size={14} strokeWidth={1.5} className="text-muted-foreground" />}>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Field label="Rano vstajem">
+              <Field label="Ráno vstávam">
                 <input
                   type="time"
                   value={settings.morningTime}
@@ -156,7 +156,7 @@ export default function SettingsPage() {
                   className="input"
                 />
               </Field>
-              <Field label="Vecer chodim spat">
+              <Field label="Večer chodím spať">
                 <input
                   type="time"
                   value={settings.eveningTime}
@@ -164,7 +164,7 @@ export default function SettingsPage() {
                   className="input"
                 />
               </Field>
-              <Field label="Casova zona">
+              <Field label="Časová zóna">
                 <select
                   value={settings.timezone}
                   onChange={(e) => setSettings((s) => ({ ...s, timezone: e.target.value }))}
@@ -180,8 +180,8 @@ export default function SettingsPage() {
           </Section>
 
           {/* ── Cvicenie ── */}
-          <Section title="Cvicenie" icon={<Dumbbell size={14} strokeWidth={1.5} className="text-muted-foreground" />}>
-            <Field label="Typy cvicenia">
+          <Section title="Cvičenie" icon={<Dumbbell size={14} strokeWidth={1.5} className="text-muted-foreground" />}>
+            <Field label="Typy cvičenia">
               <div className="flex flex-wrap gap-2 mt-1">
                 {WORKOUT_OPTIONS.map(({ id, label }) => {
                   const isActive = settings.workoutTypes.includes(id)
@@ -204,7 +204,7 @@ export default function SettingsPage() {
               </div>
             </Field>
 
-            <Field label="Typicke dni cvicenia">
+            <Field label="Typické dni cvičenia">
               <div className="flex flex-wrap gap-2 mt-1">
                 {DAY_IDS.map((id, idx) => {
                   const isActive = settings.workoutDays.includes(id)
@@ -229,10 +229,10 @@ export default function SettingsPage() {
           </Section>
 
           {/* ── Sledovane emaily ── */}
-          <Section title="Sledovane emailove adresy" icon={<Mail size={14} strokeWidth={1.5} className="text-muted-foreground" />}>
+          <Section title="Sledované emailové adresy" icon={<Mail size={14} strokeWidth={1.5} className="text-muted-foreground" />}>
             <div className="space-y-1.5 mb-3">
               {settings.watchedEmails.length === 0 && (
-                <p className="text-[12px] font-light text-muted-foreground">Zatial ziadne sledovane adresy</p>
+                <p className="text-[12px] font-light text-muted-foreground">Zatiaľ žiadne sledované adresy</p>
               )}
               {settings.watchedEmails.map((email) => (
                 <div
@@ -271,9 +271,9 @@ export default function SettingsPage() {
           </Section>
 
           {/* ── Discord ── */}
-          <Section title="Discord kanaly" icon={<Hash size={14} strokeWidth={1.5} className="text-muted-foreground" />}>
+          <Section title="Discord kanály" icon={<Hash size={14} strokeWidth={1.5} className="text-muted-foreground" />}>
             <div className="space-y-3">
-              <Field label="Hlavny kanal (kde Sona pise tebe)">
+              <Field label="Hlavný kanál (kde Soňa píše tebe)">
                 <input
                   value={settings.discordChannelId}
                   onChange={(e) => setSettings((s) => ({ ...s, discordChannelId: e.target.value }))}
@@ -281,7 +281,7 @@ export default function SettingsPage() {
                   className="input"
                 />
               </Field>
-              <Field label="#sova-kamoska – kanal kamosky">
+              <Field label="#sova-kamoska – kanál kamosky">
                 <input
                   value={settings.discordKamoskaId || ''}
                   onChange={(e) => setSettings((s) => ({ ...s, discordKamoskaId: e.target.value }))}
@@ -289,7 +289,7 @@ export default function SettingsPage() {
                   className="input"
                 />
               </Field>
-              <Field label="#admin-sona – sukromny admin kanal">
+              <Field label="#admin-sona – súkromný admin kanál">
                 <input
                   value={settings.discordAdminId || ''}
                   onChange={(e) => setSettings((s) => ({ ...s, discordAdminId: e.target.value }))}
@@ -299,14 +299,14 @@ export default function SettingsPage() {
               </Field>
             </div>
             <p className="text-[11px] font-light text-muted-foreground mt-2">
-              Pravy klik na kanal v Discorde → Copy Channel ID (zapni Developer Mode)
+              Pravý klik na kanál v Discorde → Copy Channel ID (zapni Developer Mode)
             </p>
           </Section>
 
           {/* ── Notifikacie ── */}
-          <Section title="Notifikacie" icon={<Bell size={14} strokeWidth={1.5} className="text-muted-foreground" />}>
+          <Section title="Notifikácie" icon={<Bell size={14} strokeWidth={1.5} className="text-muted-foreground" />}>
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Rane zhrnutie">
+              <Field label="Ranné zhrnutie">
                 <input
                   type="time"
                   value={settings.morningBriefingTime}
@@ -314,7 +314,7 @@ export default function SettingsPage() {
                   className="input"
                 />
               </Field>
-              <Field label="Vecerne zhrnutie">
+              <Field label="Večerné zhrnutie">
                 <input
                   type="time"
                   value={settings.eveningBriefingTime}
@@ -332,7 +332,7 @@ export default function SettingsPage() {
             className="btn-primary w-full flex items-center justify-center gap-2 py-3"
           >
             <Save size={14} strokeWidth={1.5} />
-            {saving ? 'Ukladam...' : saved ? 'Ulozene!' : 'Ulozit nastavenia'}
+            {saving ? 'Ukladám...' : saved ? 'Uložené!' : 'Uložiť nastavenia'}
           </button>
 
         </div>

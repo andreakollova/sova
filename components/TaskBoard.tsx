@@ -15,9 +15,9 @@ interface Task {
 }
 
 const PRIORITY_LABEL = {
-  high: 'vysoka',
-  medium: 'stredna',
-  low: 'nizka',
+  high: 'vysoká',
+  medium: 'stredná',
+  low: 'nízka',
 }
 
 const PRIORITY_COLOR: Record<string, string> = {
@@ -134,7 +134,7 @@ export default function TaskBoard({ fullView = false }: { fullView?: boolean }) 
             value={newTask.title}
             onChange={(e) => setNewTask((p: any) => ({ ...p, title: e.target.value }))}
             onKeyDown={(e) => e.key === 'Enter' && addTask()}
-            placeholder="Nazov ulohy..."
+            placeholder="Názov úlohy..."
             className="input w-full"
             autoFocus
           />
@@ -152,9 +152,9 @@ export default function TaskBoard({ fullView = false }: { fullView?: boolean }) 
               onChange={(e) => setNewTask((p: any) => ({ ...p, priority: e.target.value }))}
               className="input flex-1"
             >
-              <option value="high">Vysoka</option>
-              <option value="medium">Stredna</option>
-              <option value="low">Nizka</option>
+              <option value="high">Vysoká</option>
+              <option value="medium">Stredná</option>
+              <option value="low">Nízka</option>
             </select>
             <input
               type="date"
@@ -164,8 +164,8 @@ export default function TaskBoard({ fullView = false }: { fullView?: boolean }) 
             />
           </div>
           <div className="flex gap-2">
-            <button onClick={addTask} className="btn-primary text-[12px] px-4 py-1.5">Pridat</button>
-            <button onClick={() => setShowAdd(false)} className="btn-secondary text-[12px] px-4 py-1.5">Zrusit</button>
+            <button onClick={addTask} className="btn-primary text-[12px] px-4 py-1.5">Pridať</button>
+            <button onClick={() => setShowAdd(false)} className="btn-secondary text-[12px] px-4 py-1.5">Zrušiť</button>
           </div>
         </div>
       )}
@@ -223,7 +223,7 @@ export default function TaskBoard({ fullView = false }: { fullView?: boolean }) 
                 {PRIORITY_LABEL[task.priority]}
               </span>
               <span className="text-[11px] text-muted-foreground font-light">
-                {task.category === 'work' ? 'praca' : 'osobne'}
+                {task.category === 'work' ? 'práca' : 'osobné'}
               </span>
               <button
                 onClick={() => deleteTask(task.id)}

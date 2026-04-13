@@ -70,7 +70,7 @@ export default function ContentStudio() {
                     : { color: '#666666' }
                 }
               >
-                {t === 'articles' ? 'Clanky' : 'Research'}
+                {t === 'articles' ? 'Články' : 'Research'}
               </button>
             ))}
           </div>
@@ -79,7 +79,7 @@ export default function ContentStudio() {
               onClick={generateResearch}
               disabled={generating}
               className="text-muted-foreground hover:text-foreground transition-colors"
-              title="Generovat novy research"
+              title="Generovať nový research"
             >
               <RefreshCw size={13} strokeWidth={1.5} className={generating ? 'animate-spin' : ''} />
             </button>
@@ -92,8 +92,8 @@ export default function ContentStudio() {
               <Feather size={22} strokeWidth={1.5} className="text-muted-foreground/40" />
               <p className="text-[12px] font-light text-muted-foreground">
                 {activeTab === 'articles'
-                  ? 'Poziadaj Sonu v chate o napisanie clanku'
-                  : 'Klikni na obnovit pre novy LinkedIn research'}
+                  ? 'Požiadaj Soňu v chate o napísanie článku'
+                  : 'Klikni na obnoviť pre nový LinkedIn research'}
               </p>
             </div>
           ) : (
@@ -130,7 +130,7 @@ export default function ContentStudio() {
                 style={{ background: 'rgba(255,255,255,0.03)' }}
               >
                 {copied ? <Check size={12} strokeWidth={1.5} className="text-green-400" /> : <Copy size={12} strokeWidth={1.5} />}
-                {copied ? 'Skopirovane' : 'Kopirovat'}
+                {copied ? 'Skopírované' : 'Kopírovať'}
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
@@ -158,7 +158,7 @@ export default function ContentStudio() {
             <BookOpen size={28} strokeWidth={1.5} className="text-muted-foreground/30" />
             <p className="text-[13px] font-normal text-muted-foreground">Vyber obsah zo zoznamu</p>
             <p className="text-[12px] font-light text-muted-foreground">
-              Alebo povedz Sone v chate: &quot;Napíš LinkedIn post o [tema]&quot;
+              Alebo povedz Soňe v chate: &quot;Napíš LinkedIn post o [téma]&quot;
             </p>
           </div>
         )}

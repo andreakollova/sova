@@ -12,7 +12,7 @@ export default function ContentPage() {
           <div>
             <h1 className="text-[22px] font-normal text-foreground">Content Studio</h1>
             <p className="text-[13px] font-light text-muted-foreground mt-1">
-              Clanky, LinkedIn posty a research od Sony
+              Články, LinkedIn posty a research od Soňy
             </p>
           </div>
           <ContentStudio />
