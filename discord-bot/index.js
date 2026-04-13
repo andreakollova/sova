@@ -62,6 +62,52 @@ async function kvSet(key, value) {
 // Active reminders: key = normalized description, value = { timeoutId, time, channelId }
 const activeReminders = new Map()
 
+const REMINDERS_KEY = 'sova:reminders:timed'
+
+async function getTimedReminders() {
+  return (await kvGet(REMINDERS_KEY)) ?? []
+}
+
+async function addTimedReminder(reminder) {
+  const reminders = await getTimedReminders()
+  reminders.push(reminder)
+  await kvSet(REMINDERS_KEY, reminders)
+}
+
+async function deleteTimedReminder(id) {
+  const reminders = await getTimedReminders()
+  await kvSet(REMINDERS_KEY, reminders.filter(r => r.id !== id))
+}
+
+async function fireReminder(reminder) {
+  try {
+    const channel = await client.channels.fetch(reminder.channelId)
+    if (channel) await channel.send(`⏰ Pripomienka: **${reminder.eventDescription}** o ${reminder.reminderTime}!`)
+  } catch (e) {
+    console.error('fireReminder error:', e)
+  }
+  await deleteTimedReminder(reminder.id)
+}
+
+async function scheduleTimedReminder(reminder) {
+  const delayMs = new Date(reminder.notifyAt).getTime() - Date.now()
+  if (delayMs <= 0) {
+    await fireReminder(reminder)
+    return
+  }
+  setTimeout(() => fireReminder(reminder), delayMs)
+  console.log(`Reminder scheduled: "${reminder.eventDescription}" in ${Math.round(delayMs / 60000)} min`)
+}
+
+async function loadAndRescheduleReminders() {
+  const reminders = await getTimedReminders()
+  const now = Date.now()
+  const fresh = reminders.filter(r => new Date(r.notifyAt).getTime() > now - 60000)
+  if (fresh.length !== reminders.length) await kvSet(REMINDERS_KEY, fresh)
+  for (const r of fresh) await scheduleTimedReminder(r)
+  if (fresh.length > 0) console.log(`Rescheduled ${fresh.length} reminder(s) after restart`)
+}
+
 // Pomodoro state
 let pomodoroTimeout = null
 let pomodoroRound = 0
@@ -234,14 +280,15 @@ async function scheduleReminder(userText, channel) {
 
     if (delayMs <= 0 || delayMs > 24 * 60 * 60 * 1000) return 'too_close'
 
-    // Use setTimeout — simple and reliable
-    setTimeout(async () => {
-      try {
-        await channel.send(`⏰ Pripomienka: **${parsed.eventDescription}** o ${parsed.reminderTime}!`)
-      } catch (e) {
-        console.error('Reminder send error:', e)
-      }
-    }, delayMs)
+    const reminder = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      notifyAt: notifyAt.toISOString(),
+      eventDescription: parsed.eventDescription,
+      reminderTime: parsed.reminderTime,
+      channelId: channel.id,
+    }
+    await addTimedReminder(reminder)
+    setTimeout(() => fireReminder(reminder), delayMs)
 
     const notifyTime = notifyBratislava.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' })
     console.log(`Reminder set: "${parsed.eventDescription}" at ${notifyTime} (in ${Math.round(delayMs/60000)} min)`)
@@ -256,6 +303,7 @@ client.once('ready', async () => {
   console.log(`SOVA bot ready as ${client.user.tag}`)
   console.log(`Listening on channel: ${CHANNEL_ID}`)
   await loadHistory()
+  await loadAndRescheduleReminders()
 })
 
 client.on('messageCreate', async (message) => {
