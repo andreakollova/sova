@@ -9,6 +9,7 @@ const CRON_ENDPOINTS = [
   '/api/cron/weekly-meeting',
   '/api/cron/admin-listener',
   '/api/cron/hourly',
+  '/api/cron/ai-sports-research',
 ]
 
 export const dynamic = 'force-dynamic'

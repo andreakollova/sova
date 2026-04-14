@@ -47,6 +47,8 @@ export const KEYS = {
   CRON_MIDDAY_LAST: 'sova:cron:midday:last',
   CRON_GOODNIGHT_LAST: 'sova:cron:goodnight:last',
   LINKEDIN_RESEARCH: 'sova:linkedin_research',
+  AI_SPORTS_RESEARCH: 'sova:ai_sports_research',
+  CRON_AI_SPORTS_LAST: 'sova:cron:ai_sports:last',
   ARTICLE_DRAFTS: 'sova:article_drafts',
   ADMIN_PENDING: 'admin:pending_instructions',
   ADMIN_DELIVERED: 'admin:delivered_instructions',
@@ -154,6 +156,34 @@ export async function saveLinkedInResearch(item: GeneratedContent): Promise<void
   const all = await getLinkedInResearch()
   all.unshift(item)
   await kvSet(KEYS.LINKEDIN_RESEARCH, all.slice(0, 20))
+}
+
+// ─── AI Sports Research ─────────────────────────────────────────────────────
+
+export interface AiSportsArticle {
+  title: string
+  description: string
+  url: string
+  imageUrl: string | null
+  source: string
+  linkedinPost: string
+}
+
+export interface AiSportsResearch {
+  date: string
+  fetchedAt: string
+  articles: AiSportsArticle[]
+}
+
+export async function getAiSportsResearch(): Promise<AiSportsResearch[]> {
+  return (await kvGet<AiSportsResearch[]>(KEYS.AI_SPORTS_RESEARCH)) ?? []
+}
+
+export async function saveAiSportsResearch(item: AiSportsResearch): Promise<void> {
+  const all = await getAiSportsResearch()
+  const filtered = all.filter((r) => r.date !== item.date)
+  filtered.unshift(item)
+  await kvSet(KEYS.AI_SPORTS_RESEARCH, filtered.slice(0, 14))
 }
 
 // ─── Admin Layer ────────────────────────────────────────────────────────────

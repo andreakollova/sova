@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { getSettings, KEYS, isWithinTimeWindow, getPendingInstructions, markInstructionDelivered, getHockeyPlan } from '@/lib/kv'
+import { getSettings, KEYS, isWithinTimeWindow, getPendingInstructions, markInstructionDelivered, getHockeyPlan, getAiSportsResearch } from '@/lib/kv'
 import { sendDiscordMessage, formatMorningBriefing } from '@/lib/discord'
 import { getTodayEvents, getTomorrowEvents } from '@/lib/google-calendar'
 import { getTopPriorityTasks } from '@/lib/tasks'
@@ -22,12 +22,13 @@ export async function GET(req: NextRequest) {
     const shouldRun = force || await isWithinTimeWindow(KEYS.CRON_MORNING_LAST, settings.morningTime)
     if (!shouldRun) return NextResponse.json({ skipped: true })
 
-    const [todayEvents, tomorrowEvents, topTasks, urgentEmails, hockeyPlan] = await Promise.all([
+    const [todayEvents, tomorrowEvents, topTasks, urgentEmails, hockeyPlan, aiSports] = await Promise.all([
       getTodayEvents(),
       getTomorrowEvents(),
       getTopPriorityTasks(3),
       getNewEmailsFromWatchedAddresses(),
       getHockeyPlan(),
+      getAiSportsResearch(),
     ])
 
     const hasTraining = hasWorkout(todayEvents)
@@ -113,6 +114,17 @@ Buď konkrétna, teplá, nikdy generická. Ak máš inštrukcie vyššie, zakomp
           settings.discordChannelId
         )
       }
+    }
+
+    // AI sports research teaser
+    const todayStr = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Bratislava' })).toISOString().slice(0, 10)
+    const todayResearch = aiSports.find((r) => r.date === todayStr)
+    if (todayResearch && todayResearch.articles.length > 0) {
+      const titles = todayResearch.articles.map((a, i) => `${i + 1}. **${a.title}** _(${a.source})_`).join('\n')
+      await sendDiscordMessage(
+        `🤖 **AI v športe dnes:**\n${titles}\n\n_LinkedIn posty ti pošlem o 15:00_`,
+        settings.discordChannelId
+      )
     }
 
     return NextResponse.json({ success: true })

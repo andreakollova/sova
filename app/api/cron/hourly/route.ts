@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { getSettings } from '@/lib/kv'
+import { getSettings, getAiSportsResearch } from '@/lib/kv'
 import redis from '@/lib/kv'
 import { sendDiscordMessage } from '@/lib/discord'
 import { getTodayEvents } from '@/lib/google-calendar'
@@ -35,6 +35,22 @@ export async function GET(req: NextRequest) {
 
     // Skip hours covered by other crons (11, 12, 20)
     if ([11, 12, 20].includes(hour)) return NextResponse.json({ skipped: true, reason: 'covered by other cron' })
+
+    // LinkedIn reminder at 15:00
+    if (hour === 15) {
+      const aiSports = await getAiSportsResearch()
+      const todayResearch = aiSports.find((r) => r.date === today)
+      if (todayResearch && todayResearch.articles.length > 0) {
+        const settings = await getSettings()
+        for (const a of todayResearch.articles) {
+          await sendDiscordMessage(
+            `📲 **LinkedIn post – ${a.title}**\n_Zdroj: ${a.source} — ${a.url}_${a.imageUrl ? `\n🖼️ Odporúčaný obrázok: ${a.imageUrl}` : ''}\n\n${a.linkedinPost}`,
+            settings.discordChannelId
+          )
+        }
+        return NextResponse.json({ success: true, type: 'linkedin_reminder' })
+      }
+    }
 
     const [settings, events, tasks] = await Promise.all([
       getSettings(),
