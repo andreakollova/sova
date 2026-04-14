@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
-import { getSettings, KEYS, isWithinTimeWindow, getPendingInstructions, markInstructionDelivered, getHockeyPlan, getAiSportsResearch } from '@/lib/kv'
+import { getSettings, KEYS, isWithinTimeWindow, getPendingInstructions, markInstructionDelivered, getHockeyPlan, getAiSportsResearch, addMessage } from '@/lib/kv'
 import { sendDiscordMessage } from '@/lib/discord'
 import { getTodayEvents, getTomorrowEvents } from '@/lib/google-calendar'
 import { getTopPriorityTasks } from '@/lib/tasks'
@@ -69,34 +69,41 @@ export async function GET(req: NextRequest) {
       ['tréning', 'trening', 'workout', 'gym', 'beh', 'plávanie', 'hokej'].some((kw) => e.summary.toLowerCase().includes(kw))
     )
 
-    const prompt = `Si Soňa – osobná AI asistentka Andrejky (Natky, Fonduly). Je ráno (${dateStr}) a posielaš jej ranný brief do Discordu.
+    const top3tasks = topTasks.slice(0, 3)
+    const remainingTasks = topTasks.slice(3)
+
+    const prompt = `Si Soňa – osobná AI asistentka Andrejky (Natky, Fonduly). Je ráno (${dateStr}) a posielaš jej ranný check-in do Discordu.
 
 KONTEXT:
-Dnešný kalendár:\n${calendarContext}
-Zajtra:\n${tomorrowContext}
-Otvorené úlohy:\n${tasksContext}
-Dôležité emaily:\n${emailContext}
-Dnes má tréning: ${workoutToday ? 'áno' : 'nie'}
-Jej projekty: ${PROJECTS.join(', ')}
-${hockeyPlan?.hasMatch && hockeyPlan.matchDate === now.toISOString().slice(0, 10) ? `Dnes má hokejový zápas${hockeyPlan.opponent ? ` proti ${hockeyPlan.opponent}` : ''}!` : ''}
+Dnešný kalendár: ${calendarContext}
+Zajtra: ${tomorrowContext}
+Top 3 úlohy (podľa priority): ${top3tasks.map((t) => `${t.title}${t.project ? ` (${t.project})` : ''}${t.deadline ? ` – do ${t.deadline}` : ''}`).join(' | ')}
+${remainingTasks.length > 0 ? `Ďalšie otvorené: ${remainingTasks.length} úloh` : ''}
+Emaily: ${urgentEmails.length > 0 ? urgentEmails.map(e => e.subject).join(', ') : 'žiadne'}
+Tréning dnes: ${workoutToday ? 'áno' : 'nie'}
+${hockeyPlan?.hasMatch && hockeyPlan.matchDate === now.toISOString().slice(0, 10) ? `⚠️ DNES HOKEJOVÝ ZÁPAS${hockeyPlan.opponent ? ` proti ${hockeyPlan.opponent}` : ''}!` : ''}
 ${adminContext}${toneContext}
 
-NAPÍŠ RANNÝ BRIEF ktorý obsahuje:
-1. Teplý, osobný pozdrav (1-2 vety) – nie generický
-2. Prehľad dňa – čo ju dnes čaká
-3. Úlohy – zhrň priority, navrhni poradie, ku každej úlohe s projektom spomeň projekt
-4. Focus time – navrhni kedy sa sústrediť na čo (napr. "9-11 Sportqo, po tréningu EuroHockey materiály")
-5. Tréning – ak ho má dnes, povzbuď; spomeň aj ďalší v týždni ak vieš
-6. Pomodoro tip – navrhni koľko pomodoros a na čo
-7. Otázka na projekty – prirodzene sa opýtaj na jeden konkrétny projekt (vyber podľa úloh)
+NAPÍŠ KRÁTKY RANNÝ CHECK-IN (nie dlhý brief!) ktorý obsahuje:
+1. Krátky, osobný pozdrav (1 veta) – spomeň deň, niečo konkrétne z kalendára alebo úloh
+2. Bleskový prehľad dňa (2-4 odrážky) – len to najdôležitejšie: čo ju čaká, top úlohy s projektmi, tréning ak je
+3. Na záver JASNE ODDELENÁ sekcia s 3 check-in otázkami:
 
-Tón: priateľský, teplý, konkrétny – ako by ti písala kamarátka ktorá ťa dobre pozná. Nie korporátne, nie generické.
-Jazyk: slovenčina, bez diakritiky je OK
-Formát: Discord markdown (tučné, odrážky). Max 1800 znakov celkovo.`
+---
+**Pred začatím – rýchly check-in:**
+🔋 Ako sa dnes cítiš? (energia, nálada)
+🎯 Čo je dnes tvoja ONE THING – jedna vec ktorú MUSÍŠ spraviť?
+🚧 Je niečo čo ťa brzdí alebo by som mala vedieť?
+
+---
+
+Tón: priateľský, konkrétny, nie korporátny. Kratke vety.
+Jazyk: slovenčina, bez diakritiky je OK.
+Formát: Discord markdown. Max 900 znakov (bez sekcie otázok).`
 
     const res = await openai.chat.completions.create({
       model: 'gpt-4o',
-      max_tokens: 700,
+      max_tokens: 500,
       messages: [{ role: 'user', content: prompt }],
     })
 
@@ -108,6 +115,9 @@ Formát: Discord markdown (tučné, odrážky). Max 1800 znakov celkovo.`
     }
 
     await sendDiscordMessage(brief, settings.discordChannelId)
+
+    // Save brief to conversation history so bot knows what was asked
+    await addMessage({ role: 'assistant', content: brief, timestamp: new Date().toISOString() })
 
     // Running / fitness media
     if (hasRunning(todayEvents)) {
