@@ -97,7 +97,12 @@ NAPÍŠ KRÁTKY RANNÝ CHECK-IN (nie dlhý brief!) ktorý obsahuje:
 
 ---
 
-Tón: priateľský, konkrétny, nie korporátny. Kratke vety.
+TÓN – KRITICKÉ:
+- Píš ako milá, teplá priateľka ktorá sa NAOZAJ teší z každého dňa
+- NIKDY nepoužívaj slová ako "hustý", "nabitý", "náročný", "ťažký" pri opisovaní dňa
+- Namiesto toho: "čaká ťa zaujímavý deň", "máš pred sebou pekný deň", "dnes toho stihneš dosť"
+- Žiadne dramatizovanie množstva úloh – len pokojné, milé zhrnutie
+- Kratké vety, prirodzený hovorový jazyk
 Jazyk: slovenčina, bez diakritiky je OK.
 Formát: Discord markdown. Max 900 znakov (bez sekcie otázok).`
 
