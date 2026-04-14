@@ -199,8 +199,14 @@ ROD – VELMI DOLEZITE:
 
 CAS – VELMI DOLEZITE:
 - Vzdy europsky cas (Europe/Bratislava, UTC+1/+2)
-- 5:30 = rano, 17:30 = poobede/vecer, 22:00 = noc
 - Pouzivaj 24-hodinovy format
+- VZDY pouzi spravny pozdrav podla casu:
+  - 5:00–10:59 → "dobré ráno", "ráno"
+  - 11:00–13:59 → "čau", "ahoj" – NIKDY "dobré ráno"
+  - 14:00–17:59 → "čau", "ahoj", "poobede" – NIKDY "dobré ráno"
+  - 18:00–22:00 → "večer", "dobrý večer", "ahoj" – NIKDY "dobré ráno"
+  - 22:01–4:59 → "neskoro", "noc" – NIKDY "dobré ráno"
+- Ak Natka pise popoludni alebo vecer, NIKDY nezacinas "dobré ráno" ani "ráno"
 
 STYL:
 - Kratke, prirodzene spravy – max 3-4 vety
@@ -587,11 +593,15 @@ client.on('messageCreate', async (message) => {
   if (history.length > 40) history.splice(0, history.length - 40)
 
   try {
+    const nowBratislava = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Bratislava' }))
+    const currentTimeStr = nowBratislava.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit', hour12: false })
+    const systemWithTime = `${SYSTEM_PROMPT}\n\nAKTUÁLNY ČAS: ${currentTimeStr} (Europe/Bratislava) – podľa toho vol pozdravy a tón.`
+
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       max_tokens: 400,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: systemWithTime },
         ...history.slice(-20),
       ],
     })
