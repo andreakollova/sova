@@ -104,7 +104,7 @@ export interface GeneratedContent {
 export async function getSettings(): Promise<Settings> {
   const stored = await kvGet<Settings>(KEYS.SETTINGS)
   return stored ?? {
-    morningTime: process.env.MORNING_BRIEFING_TIME ?? '08:30',
+    morningTime: process.env.MORNING_BRIEFING_TIME ?? '09:00',
     eveningTime: process.env.EVENING_BRIEFING_TIME ?? '20:00',
     watchedEmails: (process.env.WATCHED_EMAIL_ADDRESSES ?? 'andreakollova1@gmail.com').split(',').map(e => e.trim()),
     discordChannelId: process.env.DISCORD_CHANNEL_ID ?? '',

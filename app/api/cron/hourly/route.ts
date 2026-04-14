@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { getSettings, getAiSportsResearch } from '@/lib/kv'
 import redis from '@/lib/kv'
 import { sendDiscordMessage } from '@/lib/discord'
@@ -7,11 +7,11 @@ import { getTodayEvents } from '@/lib/google-calendar'
 import { getTopPriorityTasks } from '@/lib/tasks'
 import { MEDIA } from '@/lib/media'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
 
 export const dynamic = 'force-dynamic'
 
-// Only runs between 9:00 and 21:00, once per hour
+// Only runs between 10:00 and 21:00, once per hour (9:00 covered by morning brief)
 export async function GET(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -22,8 +22,8 @@ export async function GET(req: NextRequest) {
     const hour = now.getHours()
     const minutes = now.getMinutes()
 
-    // Only run between 9-21h and only near top of hour (0-14 min)
-    if (hour < 9 || hour >= 21) return NextResponse.json({ skipped: true, reason: 'outside hours' })
+    // Only run between 10-21h and only near top of hour (0-14 min)
+    if (hour < 10 || hour >= 21) return NextResponse.json({ skipped: true, reason: 'outside hours' })
     if (minutes > 14) return NextResponse.json({ skipped: true, reason: 'not top of hour' })
 
     // Check if already sent this hour
@@ -33,15 +33,20 @@ export async function GET(req: NextRequest) {
     if (lastSent === today) return NextResponse.json({ skipped: true, reason: 'already sent' })
     await redis.set(lastKey, today)
 
-    // Skip hours covered by other crons (11, 12, 20)
-    if ([11, 12, 20].includes(hour)) return NextResponse.json({ skipped: true, reason: 'covered by other cron' })
+    // Skip hour covered by evening cron
+    if (hour === 20) return NextResponse.json({ skipped: true, reason: 'covered by other cron' })
 
-    // LinkedIn reminder at 15:00
+    const [settings, events, tasks, aiSports] = await Promise.all([
+      getSettings(),
+      getTodayEvents(),
+      getTopPriorityTasks(10),
+      getAiSportsResearch(),
+    ])
+
+    // LinkedIn posts at 15:00
     if (hour === 15) {
-      const aiSports = await getAiSportsResearch()
       const todayResearch = aiSports.find((r) => r.date === today)
       if (todayResearch && todayResearch.articles.length > 0) {
-        const settings = await getSettings()
         for (const a of todayResearch.articles) {
           await sendDiscordMessage(
             `📲 **LinkedIn post – ${a.title}**\n_Zdroj: ${a.source} — ${a.url}_${a.imageUrl ? `\n🖼️ Odporúčaný obrázok: ${a.imageUrl}` : ''}\n\n${a.linkedinPost}`,
@@ -51,12 +56,6 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ success: true, type: 'linkedin_reminder' })
       }
     }
-
-    const [settings, events, tasks] = await Promise.all([
-      getSettings(),
-      getTodayEvents(),
-      getTopPriorityTasks(3),
-    ])
 
     // Check if there's a workout coming up in the next 2 hours
     const upcomingWorkout = events.find(e => {
@@ -78,18 +77,38 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: true, type: 'workout_reminder' })
     }
 
-    // General hourly nudge
-    const nextEvent = events.find(e => parseInt(e.start.split(':')[0]) > hour)
-    const msgRes = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 120,
-      messages: [{
-        role: 'user',
-        content: `Si Sona, Natkina osobna asistentka. Je ${hour}:00. Napís kратку (1-2 vety) prirodzenu spravу bez diakritiky po slovensky. Natka je zena – pouzivaj zensky rod (mala, robila, prisla...). ${nextEvent ? `Dalsia udalost: ${nextEvent.summary} o ${nextEvent.start}.` : `Otvorene ulohy: ${tasks.map(t => t.title).join(', ') || 'ziadne'}.`} Bud milа, konkretna, nie genericka. Ziadna azbuka.`,
-      }],
+    // Remaining events today
+    const upcomingEvents = events.filter(e => parseInt(e.start.split(':')[0]) >= hour)
+    const calendarStr = upcomingEvents.length > 0
+      ? upcomingEvents.map(e => `${e.start} – ${e.summary}`).join('\n')
+      : 'ziadne dalsie udalosti'
+
+    const tasksStr = tasks.length > 0
+      ? tasks.map((t, i) => `${i + 1}. ${t.title} [${t.priority}]${t.project ? ` (${t.project})` : ''}${t.deadline ? ` – deadline: ${t.deadline}` : ''}`).join('\n')
+      : 'ziadne otvorene ulohy'
+
+    // Hourly work plan using GPT-4o
+    const prompt = `Si Soňa – osobna AI asistentka Andrejky (Natky, Fonduly). Teraz je ${hour}:00.
+
+Udalosti dnes (zostatok):
+${calendarStr}
+
+Otvorene ulohy (podla priority):
+${tasksStr}
+
+NAPÍŠ hodinovy plan na najblizsie 2 hodiny v tomto formate:
+🕐 **${hour}:00 – ${hour + 1}:00** – [konkretna uloha alebo projekt, max 8 slov]
+🕑 **${hour + 1}:00 – ${hour + 2}:00** – [konkretna uloha alebo projekt, max 8 slov]
+
+Potom 1 kratka motivacna veta (max 12 slov). Vyber ulohy podla priority, projektu a deadlinu. Ak je v kalendari udalost v tomto case okne, zohladni ju (napr. skrati blok pred trenigom). Max 220 znakov. Slovenčina.`
+
+    const res = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      max_tokens: 160,
+      messages: [{ role: 'user', content: prompt }],
     })
 
-    const msg = msgRes.content[0].type === 'text' ? msgRes.content[0].text : ''
+    const msg = res.choices[0].message.content ?? ''
     if (msg) await sendDiscordMessage(msg, settings.discordChannelId)
 
     return NextResponse.json({ success: true })
