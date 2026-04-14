@@ -64,6 +64,18 @@ async function kvSet(key, value) {
 // Active reminders: key = normalized description, value = { timeoutId, time, channelId }
 const activeReminders = new Map()
 
+// Projects
+const PROJECTS = ['HockeyRefresh', 'Sportqo', 'Drilzz', 'SZPH']
+const PROJECT_ALIASES = {
+  hockeyrefresh: 'HockeyRefresh', hockey: 'HockeyRefresh', refresh: 'HockeyRefresh',
+  sportqo: 'Sportqo',
+  drilzz: 'Drilzz',
+  szph: 'SZPH',
+}
+
+// Pending project assignment: { taskId, taskTitle }
+let pendingProjectTask = null
+
 const REMINDERS_KEY = 'sova:reminders:timed'
 
 async function getTimedReminders() {
@@ -332,6 +344,30 @@ client.on('messageCreate', async (message) => {
     return
   }
 
+  // ── PROJECT ASSIGNMENT (pending response) ─────────────────────────
+  if (pendingProjectTask) {
+    const { taskId, taskTitle } = pendingProjectTask
+    const lower = textLower.trim()
+    const matched = PROJECT_ALIASES[lower] || PROJECTS.find(p => lower.includes(p.toLowerCase()))
+    pendingProjectTask = null
+
+    if (matched) {
+      try {
+        await fetch(`${SOVA_URL}/api/tasks`, {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json', 'authorization': `Bearer ${CRON_SECRET}` },
+          body: JSON.stringify({ id: taskId, project: matched }),
+        })
+        await message.channel.send(`Super, priradila som ulohu "${taskTitle}" k projektu **${matched}** ✅`)
+      } catch (e) {
+        console.error('Project assign error:', e)
+      }
+    } else {
+      await message.channel.send(`Ok, uloha ostava bez projektu 👍`)
+    }
+    return
+  }
+
   // ── ON-DEMAND BRIEF ───────────────────────────────────────────────
   const briefKeywords = ['napíš mi brief', 'napis mi brief', 'daj brief', 'ranný brief', 'ranny brief', 'ranné zhrnutie', 'rane zhrnutie', 'večerný brief', 'vecerny brief', 'večerné zhrnutie', 'vecerne zhrnutie', 'daj mi zhrnutie', 'sprav brief', 'chcem brief']
   const matchedBrief = briefKeywords.find(kw => textLower.includes(kw))
@@ -515,24 +551,18 @@ client.on('messageCreate', async (message) => {
           }),
         })
         if (res.ok) {
+          const saved = await res.json()
           const deadlineStr = parsed.deadline && parsed.deadline !== 'null'
             ? ` do ${new Date(parsed.deadline).toLocaleDateString('sk-SK')}` : ''
-          const followUp = await anthropic.messages.create({
-            model: 'claude-haiku-4-5-20251001',
-            max_tokens: 100,
-            messages: [{
-              role: 'user',
-              content: `Si Sona. Prave si ulozila ulohu "${parsed.title}"${deadlineStr}. Napisˇ 1-2 vety bez diakritiky po slovensky: potvrď ze si to zapisala a prirodzene sa opytaj ci potrebuje pomoc s planovanim alebo nieco ine. Zensky rod pre Natku.`,
-            }],
-          })
-          const followUpText = followUp.content[0]?.type === 'text' ? followUp.content[0].text : ''
           // Schedule reminder 30 min before if task has specific time today
           let reminderNote = ''
           if (parsed.time && parsed.time !== 'null') {
             reminderNote = scheduleTaskReminder(parsed.title, parsed.time, message.channel)
           }
 
-          await message.channel.send(`${followUpText}${reminderNote}`)
+          // Ask about project
+          pendingProjectTask = { taskId: saved.id, taskTitle: parsed.title }
+          await message.channel.send(`Zapisala som: **${parsed.title}**${deadlineStr}${reminderNote}\n\nPatri tato uloha k niektoremu projektu? **HockeyRefresh / Sportqo / Drilzz / SZPH** – alebo napís "nie" 🙂`)
           return
         }
       }

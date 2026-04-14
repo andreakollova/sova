@@ -11,6 +11,7 @@ interface Task {
   status: 'todo' | 'in_progress' | 'done'
   deadline?: string
   notes?: string
+  project?: string
   createdAt: string
 }
 
@@ -222,6 +223,12 @@ export default function TaskBoard({ fullView = false }: { fullView?: boolean }) 
               >
                 {PRIORITY_LABEL[task.priority]}
               </span>
+              {task.project && (
+                <span className="text-[10px] font-normal px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8' }}>
+                  {task.project}
+                </span>
+              )}
               <span className="text-[11px] text-muted-foreground font-light">
                 {task.category === 'work' ? 'práca' : 'osobné'}
               </span>

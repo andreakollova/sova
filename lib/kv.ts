@@ -79,6 +79,7 @@ export interface Task {
   status: 'todo' | 'in_progress' | 'done'
   deadline?: string
   notes?: string
+  project?: string
   createdAt: string
   completedAt?: string
   postponedCount?: number
