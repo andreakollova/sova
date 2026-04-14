@@ -370,8 +370,7 @@ client.on('messageCreate', async (message) => {
   }
 
   // ── ON-DEMAND BRIEF ───────────────────────────────────────────────
-  const briefKeywords = ['napíš mi brief', 'napis mi brief', 'daj brief', 'ranný brief', 'ranny brief', 'ranné zhrnutie', 'rane zhrnutie', 'večerný brief', 'vecerny brief', 'večerné zhrnutie', 'vecerne zhrnutie', 'daj mi zhrnutie', 'sprav brief', 'chcem brief']
-  const matchedBrief = briefKeywords.find(kw => textLower.includes(kw))
+  const matchedBrief = /brief|zhrnutie|denný prehľad|denny prehlad/.test(textLower)
   if (matchedBrief) {
     const isEvening = textLower.includes('večer') || textLower.includes('vecer')
     const endpoint = isEvening ? '/api/cron/evening' : '/api/cron/morning'
