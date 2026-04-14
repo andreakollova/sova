@@ -17,8 +17,9 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const force = new URL(req.url).searchParams.get('force') === '1'
     const settings = await getSettings()
-    const shouldRun = await isWithinTimeWindow(KEYS.CRON_MORNING_LAST, settings.morningTime)
+    const shouldRun = force || await isWithinTimeWindow(KEYS.CRON_MORNING_LAST, settings.morningTime)
     if (!shouldRun) return NextResponse.json({ skipped: true })
 
     const [todayEvents, tomorrowEvents, topTasks, urgentEmails, hockeyPlan] = await Promise.all([

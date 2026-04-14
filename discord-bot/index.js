@@ -332,6 +332,28 @@ client.on('messageCreate', async (message) => {
     return
   }
 
+  // ── ON-DEMAND BRIEF ───────────────────────────────────────────────
+  const briefKeywords = ['napíš mi brief', 'napis mi brief', 'daj brief', 'ranný brief', 'ranny brief', 'ranné zhrnutie', 'rane zhrnutie', 'večerný brief', 'vecerny brief', 'večerné zhrnutie', 'vecerne zhrnutie', 'daj mi zhrnutie', 'sprav brief', 'chcem brief']
+  const matchedBrief = briefKeywords.find(kw => textLower.includes(kw))
+  if (matchedBrief) {
+    const isEvening = textLower.includes('večer') || textLower.includes('vecer')
+    const endpoint = isEvening ? '/api/cron/evening' : '/api/cron/morning'
+    try {
+      await message.channel.send('Moment, pripravujem pre teba zhrnutie... ⏳')
+      const res = await fetch(`${SOVA_URL}${endpoint}?force=1`, {
+        headers: { authorization: `Bearer ${CRON_SECRET}` },
+      })
+      const data = await res.json()
+      if (data.skipped) {
+        await message.channel.send('Brief som uz dnes poslala. Ak ho chces znova, napismi "force brief" 🙂')
+      }
+    } catch (e) {
+      console.error('On-demand brief error:', e)
+      await message.channel.send('Nieco sa pokazilo pri generovani briefu, skus to znova 🙏')
+    }
+    return
+  }
+
   // ── PLANNING SESSION ──────────────────────────────────────────────
   if (textLower.includes('prehlad') || textLower.includes('prehľad')) {
     planningSession = { step: 0, answers: {} }

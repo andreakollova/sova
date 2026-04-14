@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const force = new URL(req.url).searchParams.get('force') === '1'
     const settings = await getSettings()
 
     // Check goodnight window (21:20)
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: true, type: 'goodnight' })
     }
 
-    const shouldRun = await isWithinTimeWindow(KEYS.CRON_EVENING_LAST, settings.eveningTime)
+    const shouldRun = force || await isWithinTimeWindow(KEYS.CRON_EVENING_LAST, settings.eveningTime)
     if (!shouldRun) return NextResponse.json({ skipped: true })
 
     const [completedTasks, openTasks, tomorrowEvents, todayEvents] = await Promise.all([
