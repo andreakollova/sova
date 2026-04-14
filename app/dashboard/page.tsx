@@ -18,6 +18,7 @@ const DEFAULT_PROJECTS: Project[] = [
   { name: 'Sportqo', url: 'https://sportqo.com/', logoUrl: 'https://sportqo.com/assets/brand_logo-93a425fd.png' },
   { name: 'Drilzz', url: 'https://drilzz.com/', logoUrl: 'https://drilzz.com/assets/drilzz-logo-CRlAcJ5G.png' },
   { name: 'SZPH', url: 'https://szph.sk/', logoUrl: 'https://szph.sk/wp-content/uploads/2024/11/SZPH-logo-v3.png' },
+  { name: 'EuroHockey DC', url: 'https://eurohockey.org/', logoUrl: 'https://admin.eurohockey.org/wp-content/uploads/2023/08/EuroHockey-Rebranding-scaled.jpg' },
 ]
 
 const SK_DAYS = ['Nedeľa', 'Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok', 'Sobota']

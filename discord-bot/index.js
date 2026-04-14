@@ -65,12 +65,13 @@ async function kvSet(key, value) {
 const activeReminders = new Map()
 
 // Projects
-const PROJECTS = ['HockeyRefresh', 'Sportqo', 'Drilzz', 'SZPH']
+const PROJECTS = ['HockeyRefresh', 'Sportqo', 'Drilzz', 'SZPH', 'EuroHockey']
 const PROJECT_ALIASES = {
   hockeyrefresh: 'HockeyRefresh', hockey: 'HockeyRefresh', refresh: 'HockeyRefresh',
   sportqo: 'Sportqo',
   drilzz: 'Drilzz',
   szph: 'SZPH',
+  eurohockey: 'EuroHockey', euro: 'EuroHockey', 'eurohockey dc': 'EuroHockey',
 }
 
 // Pending project assignment: { taskId, taskTitle }
@@ -562,7 +563,7 @@ client.on('messageCreate', async (message) => {
 
           // Ask about project
           pendingProjectTask = { taskId: saved.id, taskTitle: parsed.title }
-          await message.channel.send(`Zapisala som: **${parsed.title}**${deadlineStr}${reminderNote}\n\nPatri tato uloha k niektoremu projektu? **HockeyRefresh / Sportqo / Drilzz / SZPH** – alebo napís "nie" 🙂`)
+          await message.channel.send(`Zapisala som: **${parsed.title}**${deadlineStr}${reminderNote}\n\nPatri tato uloha k niektoremu projektu? **HockeyRefresh / Sportqo / Drilzz / SZPH / EuroHockey** – alebo napís "nie" 🙂`)
           return
         }
       }
