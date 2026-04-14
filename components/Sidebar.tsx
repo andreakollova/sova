@@ -23,16 +23,16 @@ const nav = [
 ]
 
 export default function Sidebar({ active }: { active: string }) {
-  const [dark, setDark] = useState(true)
+  const [dark, setDark] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem('sova-theme')
-    if (stored === 'light') {
-      setDark(false)
-      document.documentElement.classList.remove('dark')
-    } else {
+    if (stored === 'dark') {
       setDark(true)
       document.documentElement.classList.add('dark')
+    } else {
+      setDark(false)
+      document.documentElement.classList.remove('dark')
     }
   }, [])
 
