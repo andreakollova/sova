@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { getConversations, addMessage, getSettings, getTasks } from '@/lib/kv'
 import { getSovaPromptWithContext } from '@/lib/sova-personality'
 import { getTodayEvents, getTomorrowEvents, createCalendarEvent } from '@/lib/google-calendar'
 import { sendDiscordMessage } from '@/lib/discord'
 import { saveContent, type GeneratedContent } from '@/lib/kv'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,7 +29,8 @@ export async function POST(req: NextRequest) {
       tomorrowEvents,
     })
 
-    const messages: Anthropic.MessageParam[] = [
+    const messages: OpenAI.ChatCompletionMessageParam[] = [
+      { role: 'system', content: systemPrompt },
       ...history.slice(-20).map((m) => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
@@ -35,14 +38,13 @@ export async function POST(req: NextRequest) {
       { role: 'user', content: message },
     ]
 
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
       max_tokens: 2000,
-      system: systemPrompt,
       messages,
     })
 
-    const reply = response.content[0].type === 'text' ? response.content[0].text : ''
+    const reply = response.choices[0].message.content ?? ''
 
     // Save to history
     await addMessage({ role: 'user', content: message, timestamp: new Date().toISOString() })
@@ -80,7 +82,7 @@ function isArticleRequest(msg: string): boolean {
 
 async function parseAndCreateCalendarEvent(userMsg: string, sovaReply: string) {
   try {
-    const parseRes = await client.messages.create({
+    const parseRes = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 300,
       messages: [
@@ -107,8 +109,8 @@ Vráť len JSON, nič iné.`,
 
 async function generateArticleAsync(brief: string, channelId: string) {
   try {
-    const articleRes = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    const articleRes = await openai.chat.completions.create({
+      model: 'gpt-4o',
       max_tokens: 3000,
       messages: [
         {
@@ -131,7 +133,7 @@ Píš tak, aby to znelo ľudsky, osobne, nie korporátne.`,
       ],
     })
 
-    const content = articleRes.content[0].type === 'text' ? articleRes.content[0].text : ''
+    const content = articleRes.choices[0].message.content ?? ''
     const [fullArticle, linkedinVersion] = content.split('---\n## LinkedIn verzia')
 
     const item: GeneratedContent = {

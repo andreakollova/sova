@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { getLinkedInResearch, saveLinkedInResearch, type GeneratedContent } from '@/lib/kv'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
 
 export async function GET() {
   const research = await getLinkedInResearch()
@@ -11,8 +11,8 @@ export async function GET() {
 
 export async function POST() {
   try {
-    const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    const res = await openai.chat.completions.create({
+      model: 'gpt-4o',
       max_tokens: 1500,
       messages: [
         {
@@ -37,7 +37,7 @@ Témy musia byť v slovenčine ale môžu byť o globálnych trendoch.`,
       ],
     })
 
-    const content = res.content[0].type === 'text' ? res.content[0].text : ''
+    const content = res.choices[0].message.content ?? ''
 
     const item: GeneratedContent = {
       id: `research_${Date.now()}`,

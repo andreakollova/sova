@@ -1,5 +1,6 @@
 const { Client, GatewayIntentBits } = require('discord.js')
 const Anthropic = require('@anthropic-ai/sdk')
+const OpenAI = require('openai').default
 
 const client = new Client({
   intents: [
@@ -10,6 +11,7 @@ const client = new Client({
 })
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 const SOVA_URL = process.env.SOVA_URL ?? 'https://sova-phi.vercel.app'
 
 const MEDIA = {
@@ -522,14 +524,16 @@ client.on('messageCreate', async (message) => {
   if (history.length > 40) history.splice(0, history.length - 40)
 
   try {
-    const response = await anthropic.messages.create({
-      model: 'claude-opus-4-6',
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
       max_tokens: 400,
-      system: SYSTEM_PROMPT,
-      messages: history.slice(-20),
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        ...history.slice(-20),
+      ],
     })
 
-    const reply = response.content[0]?.type === 'text' ? response.content[0].text : ''
+    const reply = response.choices[0]?.message?.content ?? ''
     if (!reply) return
 
     history.push({ role: 'assistant', content: reply })
@@ -541,7 +545,7 @@ client.on('messageCreate', async (message) => {
     const mediaUrl = detectMedia(userText)
     if (mediaUrl) await message.channel.send(mediaUrl)
   } catch (err) {
-    console.error('Anthropic error:', err)
+    console.error('OpenAI error:', err)
     await message.channel.send(`Prepac, nieco sa pokazilo (${err.message ?? 'unknown error'}). Skus znova 🙏`)
   }
 })
