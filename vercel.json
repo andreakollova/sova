@@ -1,1 +1,14 @@
-{}
+{
+  "crons": [
+    { "path": "/api/cron/morning?force=1", "schedule": "0 7 * * *" },
+    { "path": "/api/cron/evening?force=1", "schedule": "0 18 * * *" },
+    { "path": "/api/cron/evening?force=1", "schedule": "20 19 * * *" },
+    { "path": "/api/cron/hourly", "schedule": "0 8-19 * * *" },
+    { "path": "/api/cron/midday", "schedule": "35 8 * * *" },
+    { "path": "/api/cron/midday", "schedule": "0 9 * * *" },
+    { "path": "/api/cron/midday", "schedule": "0 10 * * *" },
+    { "path": "/api/cron/gmail-check", "schedule": "0 7-18 * * *" },
+    { "path": "/api/cron/ai-sports-research", "schedule": "0 5 * * *" },
+    { "path": "/api/cron/weekly-meeting?force=1", "schedule": "0 7 * * 1" }
+  ]
+}

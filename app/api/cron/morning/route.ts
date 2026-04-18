@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
 import { getSettings, KEYS, isWithinTimeWindow, getPendingInstructions, markInstructionDelivered, getHockeyPlan, getAiSportsResearch, addMessage } from '@/lib/kv'
+import redis from '@/lib/kv'
 import { sendDiscordMessage } from '@/lib/discord'
 import { getTodayEvents, getTomorrowEvents } from '@/lib/google-calendar'
 import { getTopPriorityTasks } from '@/lib/tasks'
@@ -24,8 +25,23 @@ export async function GET(req: NextRequest) {
   try {
     const force = new URL(req.url).searchParams.get('force') === '1'
     const settings = await getSettings()
-    const shouldRun = force || await isWithinTimeWindow(KEYS.CRON_MORNING_LAST, settings.morningTime)
-    if (!shouldRun) return NextResponse.json({ skipped: true })
+
+    const nowBratislava = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Bratislava' }))
+    const todayStr = nowBratislava.toISOString().slice(0, 10)
+
+    // Always check "already sent today" first
+    const lastRun = await redis.get<string>(KEYS.CRON_MORNING_LAST)
+    if (lastRun && lastRun.slice(0, 10) === todayStr) {
+      return NextResponse.json({ skipped: true, reason: 'already_sent_today' })
+    }
+
+    if (!force) {
+      const shouldRun = await isWithinTimeWindow(KEYS.CRON_MORNING_LAST, settings.morningTime)
+      if (!shouldRun) return NextResponse.json({ skipped: true })
+    } else {
+      // Force mode: mark as run now so we don't double-send
+      await redis.set(KEYS.CRON_MORNING_LAST, new Date().toISOString())
+    }
 
     const [todayEvents, tomorrowEvents, topTasks, urgentEmails, hockeyPlan, aiSports] = await Promise.all([
       getTodayEvents(),
@@ -139,8 +155,8 @@ Formát: Discord markdown. Max 900 znakov (bez sekcie otázok).`
     }
 
     // AI sports research teaser
-    const todayStr = now.toISOString().slice(0, 10)
-    const todayResearch = aiSports.find((r) => r.date === todayStr)
+    const todayStr2 = now.toISOString().slice(0, 10)
+    const todayResearch = aiSports.find((r) => r.date === todayStr2)
     if (todayResearch && todayResearch.articles.length > 0) {
       const titles = todayResearch.articles.map((a, i) => `${i + 1}. **${a.title}** _(${a.source})_`).join('\n')
       await sendDiscordMessage(
