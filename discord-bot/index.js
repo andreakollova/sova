@@ -332,10 +332,8 @@ async function scheduleReminder(userText, channel) {
 }
 
 // ── BUILT-IN SCHEDULER ───────────────────────────────────────────────────────
-// Runs every minute, fires crons at the right Bratislava times.
-// No external cron service needed – Railway keeps this bot alive 24/7.
-
-const sentToday = {}
+// Runs every 5 minutes. Uses 15-minute windows + KV-backed dedup so restarts
+// never cause missed messages.
 
 async function callCron(path) {
   try {
@@ -350,69 +348,73 @@ async function callCron(path) {
   }
 }
 
-function bratislavaHHMM() {
-  const s = new Date().toLocaleString('en-US', { timeZone: 'Europe/Bratislava', hour: '2-digit', minute: '2-digit', hour12: false })
-  return s.replace(',', '').trim() // "HH:MM"
+// Returns current Bratislava time as { hour, minute, date }
+function bratislavaTime() {
+  const now = new Date()
+  const str = now.toLocaleString('en-US', { timeZone: 'Europe/Bratislava', hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+  // str = "MM/DD/YYYY, HH:MM"
+  const [datePart, timePart] = str.split(', ')
+  const [month, day, year] = datePart.split('/')
+  const [hour, minute] = timePart.split(':').map(Number)
+  return { hour, minute, date: `${year}-${month}-${day}` }
 }
 
-function bratislavaDate() {
-  return new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Bratislava' }) // "YYYY-MM-DD"
-}
+// Returns true if current time is within `windowMin` minutes of target HH:MM
+// AND hasn't already fired today (checked via KV key)
+async function shouldFire(kvKey, targetHour, targetMin, windowMin = 15) {
+  const { hour, minute, date } = bratislavaTime()
+  const nowMin = hour * 60 + minute
+  const targetTotal = targetHour * 60 + targetMin
+  if (Math.abs(nowMin - targetTotal) > windowMin) return false
 
-function bratislavaHour() {
-  return parseInt(new Date().toLocaleString('en-US', { timeZone: 'Europe/Bratislava', hour: 'numeric', hour12: false }))
+  const last = await kvGet(`sova:sched:${kvKey}`)
+  if (last === date) return false // already sent today
+
+  await kvSet(`sova:sched:${kvKey}`, date)
+  return true
 }
 
 setInterval(async () => {
-  const hhmm = bratislavaHHMM()
-  const today = bratislavaDate()
-  const hour = bratislavaHour()
+  const { hour } = bratislavaTime()
 
   // Morning brief – 09:00
-  if (hhmm === '09:00' && sentToday['morning'] !== today) {
-    sentToday['morning'] = today
+  if (await shouldFire('morning', 9, 0)) {
+    console.log('[scheduler] Firing morning brief')
     await callCron('/api/cron/morning?force=1')
   }
 
-  // Hourly work plan – every hour 10:00–19:00
-  if (hhmm.endsWith(':00') && hour >= 10 && hour <= 19 && sentToday[`hourly:${hour}`] !== today) {
-    sentToday[`hourly:${hour}`] = today
+  // Hourly work plan – 10:00 through 19:00
+  for (let h = 10; h <= 19; h++) {
+    if (hour === h && await shouldFire(`hourly:${h}`, h, 0)) {
+      console.log(`[scheduler] Firing hourly at ${h}:00`)
+      await callCron('/api/cron/hourly')
+      break
+    }
+  }
+
+  // Midday check-ins
+  if (await shouldFire('work', 10, 35)) await callCron('/api/cron/midday')
+  if (await shouldFire('checkin', 11, 0)) await callCron('/api/cron/midday')
+  if (await shouldFire('midday', 12, 0)) await callCron('/api/cron/midday')
+
+  // LinkedIn posts – 15:00 (hourly cron handles it at this hour)
+  if (hour === 15 && await shouldFire('linkedin', 15, 0)) {
     await callCron('/api/cron/hourly')
   }
 
-  // Midday crons
-  if (hhmm === '10:35' && sentToday['work'] !== today) {
-    sentToday['work'] = today
-    await callCron('/api/cron/midday')
-  }
-  if (hhmm === '11:00' && sentToday['checkin'] !== today) {
-    sentToday['checkin'] = today
-    await callCron('/api/cron/midday')
-  }
-  if (hhmm === '12:00' && sentToday['midday'] !== today) {
-    sentToday['midday'] = today
-    await callCron('/api/cron/midday')
-  }
-
   // Evening recap – 20:00
-  if (hhmm === '20:00' && sentToday['evening'] !== today) {
-    sentToday['evening'] = today
+  if (await shouldFire('evening', 20, 0)) {
+    console.log('[scheduler] Firing evening recap')
     await callCron('/api/cron/evening?force=1')
   }
 
   // Goodnight – 21:20
-  if (hhmm === '21:20' && sentToday['goodnight'] !== today) {
-    sentToday['goodnight'] = today
+  if (await shouldFire('goodnight', 21, 20)) {
     await callCron('/api/cron/evening?force=1')
   }
 
-  // LinkedIn posts – 15:00
-  if (hhmm === '15:00' && sentToday['linkedin'] !== today) {
-    sentToday['linkedin'] = today
-    await callCron('/api/cron/hourly')
-  }
-
-}, 60 * 1000)
+}, 5 * 60 * 1000)
 
 client.once('ready', async () => {
   console.log(`SOVA bot ready as ${client.user.tag}`)
