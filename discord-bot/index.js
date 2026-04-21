@@ -331,6 +331,89 @@ async function scheduleReminder(userText, channel) {
   }
 }
 
+// ── BUILT-IN SCHEDULER ───────────────────────────────────────────────────────
+// Runs every minute, fires crons at the right Bratislava times.
+// No external cron service needed – Railway keeps this bot alive 24/7.
+
+const sentToday = {}
+
+async function callCron(path) {
+  try {
+    const res = await fetch(`${SOVA_URL}${path}`, {
+      headers: { authorization: `Bearer ${CRON_SECRET}` },
+    })
+    const data = await res.json()
+    console.log(`[scheduler] ${path}:`, JSON.stringify(data).slice(0, 120))
+    return data
+  } catch (e) {
+    console.error(`[scheduler] ${path} error:`, e.message)
+  }
+}
+
+function bratislavaHHMM() {
+  const s = new Date().toLocaleString('en-US', { timeZone: 'Europe/Bratislava', hour: '2-digit', minute: '2-digit', hour12: false })
+  return s.replace(',', '').trim() // "HH:MM"
+}
+
+function bratislavaDate() {
+  return new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Bratislava' }) // "YYYY-MM-DD"
+}
+
+function bratislavaHour() {
+  return parseInt(new Date().toLocaleString('en-US', { timeZone: 'Europe/Bratislava', hour: 'numeric', hour12: false }))
+}
+
+setInterval(async () => {
+  const hhmm = bratislavaHHMM()
+  const today = bratislavaDate()
+  const hour = bratislavaHour()
+
+  // Morning brief – 09:00
+  if (hhmm === '09:00' && sentToday['morning'] !== today) {
+    sentToday['morning'] = today
+    await callCron('/api/cron/morning?force=1')
+  }
+
+  // Hourly work plan – every hour 10:00–19:00
+  if (hhmm.endsWith(':00') && hour >= 10 && hour <= 19 && sentToday[`hourly:${hour}`] !== today) {
+    sentToday[`hourly:${hour}`] = today
+    await callCron('/api/cron/hourly')
+  }
+
+  // Midday crons
+  if (hhmm === '10:35' && sentToday['work'] !== today) {
+    sentToday['work'] = today
+    await callCron('/api/cron/midday')
+  }
+  if (hhmm === '11:00' && sentToday['checkin'] !== today) {
+    sentToday['checkin'] = today
+    await callCron('/api/cron/midday')
+  }
+  if (hhmm === '12:00' && sentToday['midday'] !== today) {
+    sentToday['midday'] = today
+    await callCron('/api/cron/midday')
+  }
+
+  // Evening recap – 20:00
+  if (hhmm === '20:00' && sentToday['evening'] !== today) {
+    sentToday['evening'] = today
+    await callCron('/api/cron/evening?force=1')
+  }
+
+  // Goodnight – 21:20
+  if (hhmm === '21:20' && sentToday['goodnight'] !== today) {
+    sentToday['goodnight'] = today
+    await callCron('/api/cron/evening?force=1')
+  }
+
+  // LinkedIn posts – 15:00
+  if (hhmm === '15:00' && sentToday['linkedin'] !== today) {
+    sentToday['linkedin'] = today
+    await callCron('/api/cron/hourly')
+  }
+
+}, 60 * 1000)
+
 client.once('ready', async () => {
   console.log(`SOVA bot ready as ${client.user.tag}`)
   console.log(`Listening on channel: ${CHANNEL_ID}`)
