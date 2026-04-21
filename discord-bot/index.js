@@ -378,6 +378,9 @@ async function shouldFire(kvKey, targetHour, targetMin, windowMin = 15) {
 setInterval(async () => {
   const { hour } = bratislavaTime()
 
+  // Skip all scheduled messages when paused
+  if (await kvGet('sova:paused')) return
+
   // Morning brief – 09:00
   if (await shouldFire('morning', 9, 0)) {
     console.log('[scheduler] Firing morning brief')
@@ -430,6 +433,10 @@ client.on('messageCreate', async (message) => {
     return
   }
   if (message.author.bot) return
+
+  // Paused check
+  const paused = await kvGet('sova:paused')
+  if (paused) return
 
   const userText = message.content.trim()
   if (!userText) return
